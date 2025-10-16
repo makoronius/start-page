@@ -2,6 +2,8 @@
 
 import yaml
 import os
+import bcrypt
+import re
 from functools import wraps
 from flask import session, request, jsonify
 
@@ -25,6 +27,36 @@ def save_users(data):
     except Exception as e:
         print(f"Error saving users: {e}")
         return False
+
+def hash_password(password):
+    """Hash a password using bcrypt"""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
+def verify_password(password, hashed):
+    """Verify a password against a hash"""
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
+
+def is_password_hashed(password):
+    """Check if a password is already hashed (bcrypt hash starts with $2b$)"""
+    return password.startswith('$2b$') if password else False
+
+def validate_password_strength(password):
+    """Validate password meets complexity requirements"""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter"
+    if not re.search(r'[a-z]', password):
+        return False, "Password must contain at least one lowercase letter"
+    if not re.search(r'[0-9]', password):
+        return False, "Password must contain at least one number"
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        return False, "Password must contain at least one special character"
+    return True, "Password meets requirements"
 
 def is_local_request():
     """Check if request is from localhost - checks real IP first when behind proxy"""
@@ -142,7 +174,21 @@ def authenticate_user(username, password):
     users_data = load_users()
 
     for user in users_data.get('users', []):
-        if user['username'] == username and user['password'] == password:
-            return True
+        if user['username'] == username:
+            stored_password = user.get('password', '')
+
+            # Check if password is hashed
+            if is_password_hashed(stored_password):
+                # Verify against bcrypt hash
+                if verify_password(password, stored_password):
+                    return True
+            else:
+                # Plain text password - check and migrate to hashed
+                if stored_password == password:
+                    # Migrate to hashed password
+                    user['password'] = hash_password(password)
+                    save_users(users_data)
+                    print(f"Migrated password for user {username} to bcrypt hash")
+                    return True
 
     return False

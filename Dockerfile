@@ -17,6 +17,9 @@ COPY backend/auth.py /app/
 # Note: config.yaml and users.yaml are mounted as volumes to preserve changes
 # They should exist on the host before starting the container
 
+# Create logs directory for audit logs
+RUN mkdir -p /app/logs
+
 # Setup nginx
 COPY public/ /usr/share/nginx/html/
 COPY scripts/ /scripts/

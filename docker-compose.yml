@@ -12,6 +12,7 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./users.yaml:/app/users.yaml
+      - ./logs:/app/logs
       - ./scripts:/scripts:ro
       - /mnt/c/Scripts:/mnt/c/Scripts
     environment:

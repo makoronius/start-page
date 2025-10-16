@@ -2,15 +2,19 @@
 
 from flask import Flask, jsonify, request, send_file, session
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import yaml
 import os
 import csv
 import io
-from datetime import timedelta
+import json
+from datetime import datetime, timedelta
 from auth import (
     login_required, admin_required, authenticate_user,
     get_current_user, get_user_categories, is_local_request,
-    load_users, save_users
+    load_users, save_users, hash_password, validate_password_strength,
+    verify_password, is_password_hashed
 )
 
 app = Flask(__name__)
@@ -22,8 +26,98 @@ app.config['SESSION_COOKIE_SECURE'] = False  # Set to True when using HTTPS
 app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
 CORS(app, supports_credentials=True)
 
+# Rate limiting setup
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+    # Exempt localhost from rate limiting
+    key_func=lambda: None if is_local_request() else get_remote_address()
+)
+
 CONFIG_FILE = '/app/config.yaml'
 USERS_FILE = '/app/users.yaml'
+AUDIT_LOG_FILE = '/app/logs/audit.log'
+
+# Ensure logs directory exists
+os.makedirs(os.path.dirname(AUDIT_LOG_FILE), exist_ok=True)
+
+def audit_log(action, username=None, details=None, ip_address=None):
+    """Log audit events to file"""
+    try:
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'action': action,
+            'username': username or 'anonymous',
+            'ip_address': ip_address or request.remote_addr if request else 'unknown',
+            'details': details or {}
+        }
+        with open(AUDIT_LOG_FILE, 'a') as f:
+            f.write(json.dumps(log_entry) + '\n')
+    except Exception as e:
+        print(f"Error writing audit log: {e}")
+
+def get_ip_whitelist():
+    """Get IP whitelist from config if enabled"""
+    config = load_config()
+    if config and 'security' in config:
+        return config['security'].get('ip_whitelist', [])
+    return []
+
+def is_ip_whitelisted():
+    """Check if current IP is whitelisted (if whitelist is enabled)"""
+    # Always allow localhost
+    if is_local_request():
+        return True
+
+    whitelist = get_ip_whitelist()
+    # If no whitelist configured, allow all IPs
+    if not whitelist:
+        return True
+
+    # Check if current IP is in whitelist
+    client_ip = request.headers.get('X-Real-IP') or request.remote_addr
+    return client_ip in whitelist
+
+def sanitize_string(value, max_length=1000):
+    """Sanitize string input"""
+    if not isinstance(value, str):
+        return str(value)
+    # Remove null bytes and limit length
+    sanitized = value.replace('\x00', '').strip()
+    return sanitized[:max_length]
+
+def validate_email(email):
+    """Basic email validation"""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None if email else True
+
+def get_session_token(username):
+    """Generate session token based on user's current state"""
+    users_data = load_users()
+    for user in users_data.get('users', []):
+        if user['username'] == username:
+            # Create token from roles hash to detect changes
+            roles_str = ','.join(sorted(user.get('roles', [])))
+            password_hash = user.get('password', '')
+            # Simple hash of roles+password
+            import hashlib
+            token = hashlib.sha256(f"{roles_str}:{password_hash}".encode()).hexdigest()
+            return token
+    return None
+
+def check_session_token(username):
+    """Check if session token matches current user state"""
+    if 'session_token' not in session:
+        return True  # Old sessions without token are allowed
+
+    current_token = get_session_token(username)
+    if current_token != session.get('session_token'):
+        # Token mismatch - roles or password changed
+        return False
+    return True
 
 def load_config():
     """Load configuration from YAML file"""
@@ -66,6 +160,18 @@ def auth_status():
 
     user = get_current_user()
     if user:
+        # Check session token - invalidate if roles or password changed
+        username = session.get('username')
+        if username and not check_session_token(username):
+            # Session invalid - roles or password changed
+            audit_log('session_invalidated', username=username, details={'reason': 'role_or_password_changed'})
+            session.clear()
+            return jsonify({
+                "authenticated": False,
+                "user": None,
+                "session_invalidated": True
+            }), 200
+
         return jsonify({
             "authenticated": True,
             "user": user
@@ -77,11 +183,17 @@ def auth_status():
         }), 200
 
 @app.route('/api/auth/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     """Login endpoint"""
+    # Check IP whitelist
+    if not is_ip_whitelisted():
+        audit_log('login_blocked_ip', details={'ip': request.remote_addr})
+        return jsonify({"error": "Access denied"}), 403
+
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    username = sanitize_string(data.get('username', ''), max_length=100)
+    password = data.get('password', '')
 
     if not username or not password:
         return jsonify({"error": "Username and password required"}), 400
@@ -89,22 +201,31 @@ def login():
     if authenticate_user(username, password):
         session.permanent = True
         session['username'] = username
+        # Set session token to detect role/password changes
+        session['session_token'] = get_session_token(username)
+
         user = get_current_user()
+        audit_log('login_success', username=username)
+
         return jsonify({
             "success": True,
             "user": user
         }), 200
     else:
+        audit_log('login_failed', username=username)
         return jsonify({"error": "Invalid username or password"}), 401
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
     """Logout endpoint"""
+    username = session.get('username', 'unknown')
+    audit_log('logout', username=username)
     session.clear()
     return jsonify({"success": True}), 200
 
 @app.route('/api/auth/change-password', methods=['POST'])
 @login_required
+@limiter.limit("3 per hour")
 def change_password():
     """Change current user's password"""
     try:
@@ -119,8 +240,10 @@ def change_password():
         if not current_password or not new_password:
             return jsonify({"error": "Current and new password required"}), 400
 
-        if len(new_password) < 6:
-            return jsonify({"error": "New password must be at least 6 characters"}), 400
+        # Validate password strength
+        is_valid, message = validate_password_strength(new_password)
+        if not is_valid:
+            return jsonify({"error": message}), 400
 
         username = session.get('username')
         users_data = load_users()
@@ -128,13 +251,26 @@ def change_password():
         # Find user and verify current password
         for user in users_data.get('users', []):
             if user['username'] == username:
-                if user['password'] != current_password:
+                stored_password = user.get('password', '')
+
+                # Verify current password (supports both hashed and plain text)
+                is_correct = False
+                if is_password_hashed(stored_password):
+                    is_correct = verify_password(current_password, stored_password)
+                else:
+                    is_correct = (stored_password == current_password)
+
+                if not is_correct:
+                    audit_log('password_change_failed', username=username, details={'reason': 'incorrect_current_password'})
                     return jsonify({"error": "Current password is incorrect"}), 401
 
-                # Update password
-                user['password'] = new_password
+                # Update password with bcrypt hash
+                user['password'] = hash_password(new_password)
 
                 if save_users(users_data):
+                    # Update session token so user isn't logged out
+                    session['session_token'] = get_session_token(username)
+                    audit_log('password_changed', username=username)
                     return jsonify({"success": True, "message": "Password changed successfully"}), 200
                 else:
                     return jsonify({"error": "Failed to save password"}), 500
@@ -425,17 +561,27 @@ def get_users():
 
 @app.route('/api/users', methods=['POST'])
 @admin_required
+@limiter.limit("10 per hour")
 def create_user():
     """Create new user (admin only)"""
     try:
         data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        email = data.get('email', '')
+        username = sanitize_string(data.get('username', ''), max_length=100)
+        password = data.get('password', '')
+        email = sanitize_string(data.get('email', ''), max_length=200)
         roles = data.get('roles', [])
 
         if not username or not password:
             return jsonify({"error": "Username and password required"}), 400
+
+        # Validate password strength
+        is_valid, message = validate_password_strength(password)
+        if not is_valid:
+            return jsonify({"error": message}), 400
+
+        # Validate email if provided
+        if email and not validate_email(email):
+            return jsonify({"error": "Invalid email address"}), 400
 
         users_data = load_users()
 
@@ -444,15 +590,16 @@ def create_user():
             if user['username'] == username:
                 return jsonify({"error": "User already exists"}), 400
 
-        # Add new user
+        # Add new user with hashed password
         users_data['users'].append({
             'username': username,
-            'password': password,
+            'password': hash_password(password),
             'email': email,
             'roles': roles
         })
 
         if save_users(users_data):
+            audit_log('user_created', username=session.get('username'), details={'new_user': username})
             return jsonify({"success": True, "message": "User created"}), 200
         else:
             return jsonify({"error": "Failed to save user"}), 500
@@ -461,6 +608,7 @@ def create_user():
 
 @app.route('/api/users/<username>', methods=['PUT'])
 @admin_required
+@limiter.limit("20 per hour")
 def update_user(username):
     """Update user (admin only)"""
     try:
@@ -470,14 +618,30 @@ def update_user(username):
         # Find and update user
         for user in users_data.get('users', []):
             if user['username'] == username:
+                changes = []
+
                 if 'password' in data and data['password']:
-                    user['password'] = data['password']
+                    # Validate password strength
+                    is_valid, message = validate_password_strength(data['password'])
+                    if not is_valid:
+                        return jsonify({"error": message}), 400
+                    user['password'] = hash_password(data['password'])
+                    changes.append('password')
+
                 if 'email' in data:
-                    user['email'] = data['email']
+                    email = sanitize_string(data['email'], max_length=200)
+                    if email and not validate_email(email):
+                        return jsonify({"error": "Invalid email address"}), 400
+                    user['email'] = email
+                    changes.append('email')
+
                 if 'roles' in data:
                     user['roles'] = data['roles']
+                    changes.append('roles')
 
                 if save_users(users_data):
+                    audit_log('user_updated', username=session.get('username'),
+                             details={'updated_user': username, 'changes': changes})
                     return jsonify({"success": True, "message": "User updated"}), 200
                 else:
                     return jsonify({"error": "Failed to save user"}), 500
@@ -488,6 +652,7 @@ def update_user(username):
 
 @app.route('/api/users/<username>', methods=['DELETE'])
 @admin_required
+@limiter.limit("10 per hour")
 def delete_user(username):
     """Delete user (admin only)"""
     try:
@@ -497,6 +662,8 @@ def delete_user(username):
         users_data['users'] = [u for u in users_data['users'] if u['username'] != username]
 
         if save_users(users_data):
+            audit_log('user_deleted', username=session.get('username'),
+                     details={'deleted_user': username})
             return jsonify({"success": True, "message": "User deleted"}), 200
         else:
             return jsonify({"error": "Failed to delete user"}), 500
@@ -552,6 +719,7 @@ def create_role():
 
 @app.route('/api/roles', methods=['PUT'])
 @admin_required
+@limiter.limit("20 per hour")
 def update_roles():
     """Update all roles (admin only)"""
     try:
@@ -562,6 +730,7 @@ def update_roles():
         users_data['roles'] = data.get('roles', [])
 
         if save_users(users_data):
+            audit_log('roles_updated', username=session.get('username'))
             return jsonify({"success": True, "message": "Roles updated"}), 200
         else:
             return jsonify({"error": "Failed to save roles"}), 500
@@ -570,6 +739,7 @@ def update_roles():
 
 @app.route('/api/roles/<name>', methods=['DELETE'])
 @admin_required
+@limiter.limit("10 per hour")
 def delete_role(name):
     """Delete role (admin only)"""
     try:
@@ -584,6 +754,8 @@ def delete_role(name):
         users_data['roles'] = [r for r in users_data.get('roles', []) if r['name'] != name]
 
         if save_users(users_data):
+            audit_log('role_deleted', username=session.get('username'),
+                     details={'deleted_role': name})
             return jsonify({"success": True, "message": "Role deleted"}), 200
         else:
             return jsonify({"error": "Failed to delete role"}), 500
@@ -652,4 +824,12 @@ def delete_category(name):
         return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
+    # Log application startup
+    audit_log('app_started', details={'version': '2.0', 'security_features': 'enabled'})
+    print("Starting application with security features enabled")
+    print("- Password hashing: bcrypt")
+    print("- Rate limiting: enabled")
+    print("- Audit logging: enabled")
+    print("- Session token validation: enabled")
+    print("- Input sanitization: enabled")
     app.run(host='0.0.0.0', port=5555, debug=True)

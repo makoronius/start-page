@@ -1114,6 +1114,9 @@
                 <div class="form-group">
                     <label for="new-password">New Password</label>
                     <input type="password" id="new-password" required>
+                    <small style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                        Password must be at least 8 characters with uppercase, lowercase, number, and special character
+                    </small>
                 </div>
 
                 <div class="form-group">
@@ -1158,6 +1161,9 @@
             <div class="form-group">
                 <label for="user-password">Password *</label>
                 <input type="password" id="user-password" required>
+                <small style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                    Password must be at least 8 characters with uppercase, lowercase, number, and special character
+                </small>
             </div>
 
             <div class="form-group">
@@ -2777,9 +2783,11 @@
         }
 
         function closeUserModal(event) {
-            if (event && event.target.id !== 'user-modal') return;
+            // If event is passed, only close if clicking on the background
+            if (event && event.target && event.target.id !== 'user-modal') return;
             document.getElementById('user-modal').classList.add('hidden');
             document.getElementById('user-password').placeholder = '';
+            document.getElementById('user-modal-message').innerHTML = '';
             currentEditingUser = null;
         }
 
