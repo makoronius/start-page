@@ -2348,6 +2348,14 @@
                     if (config.categories) {
                         renderCategoryTabs();
                     }
+
+                    // Update dashboard title and subtitle live
+                    if (config.dashboard_title) {
+                        document.getElementById('pageTitle').textContent = config.dashboard_title;
+                    }
+                    if (config.dashboard_subtitle) {
+                        document.getElementById('pageSubtitle').textContent = config.dashboard_subtitle;
+                    }
                 } catch (renderError) {
                     console.error('Error re-rendering:', renderError);
                 }
