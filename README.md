@@ -6,12 +6,16 @@ A clean, modern landing page for quick access to all your local development serv
 
 ## Features
 
-- 🎨 Modern, responsive design
-- 🔗 Quick links to all local services
-- 📡 Server and CI/CD information
+- 🎨 Modern, responsive design with Dark/Light/System theme switcher
+- 🔗 Quick links to all services (local and remote)
+- ⚙️ Web-based configuration editor
+- 📝 Dynamic service management via Config tab
+- 📄 CSV generation from configuration for port proxy scripts
+- 🌐 Flask API backend for configuration management
 - 🔧 Port proxy management scripts included
 - 🐳 Docker-ready deployment
 - ⚡ Auto-refresh every 5 minutes
+- 💾 Theme preferences stored in browser cookies
 
 ## Services Included
 
@@ -85,10 +89,13 @@ cd C:\Scripts
 ```
 start-page/
 ├── public/
-│   └── index.html          # Landing page
+│   └── index.html          # Landing page with Config tab
+├── backend/
+│   ├── app.py              # Flask API server
+│   └── requirements.txt    # Python dependencies
 ├── scripts/
-│   ├── Update-DockerPortProxy.ps1
-│   └── port-mappings.csv
+│   └── Update-DockerPortProxy.ps1
+├── config.yaml             # Central configuration file
 ├── docs/
 │   └── README.md
 ├── docker-compose.yml
@@ -96,27 +103,52 @@ start-page/
 └── README.md
 ```
 
-## Customization
+## Configuration
 
-### Update Service Links
+### Web-Based Configuration
 
-Edit `public/index.html` and modify the service cards:
+Access the **Config** tab in the web interface to:
+- Add, edit, or remove services
+- Change service icons, names, URLs, and descriptions
+- Mark services as local (included in CSV export)
+- Download generated CSV for port proxy scripts
 
-```html
-<a href="http://your-server:port" class="service-card">
-    <div class="service-icon">🎯</div>
-    <div class="service-title">Your Service</div>
-    <div class="service-description">
-        Service description here
-    </div>
-    <div class="service-url">http://your-server:port</div>
-    <span class="service-status status-running">Running</span>
-</a>
+All changes are stored in `config.yaml`.
+
+### Manual Configuration
+
+Edit `config.yaml` to configure:
+
+**Settings:**
+- `hostname`: Server hostname (e.g., "hypervisor")
+- `title`: Dashboard title
+- `subtitle`: Dashboard subtitle
+- `auto_refresh_minutes`: Auto-refresh interval
+- `ssh_user`: SSH username
+
+**Services:**
+```yaml
+services:
+  - name: "Service Name"
+    icon: "🔧"
+    url: "http://hostname:port"
+    description: "Service description"
+    port: 8080
+    local: true
+    status: running
 ```
 
-### Change Styling
+**Port Mappings:**
+```yaml
+port_mappings:
+  - port: 8080
+    service: "Service Name"
+    description: "Service description"
+```
 
-The entire page is self-contained with inline CSS in `index.html`. Modify the `<style>` section to customize colors, fonts, and layout.
+### Theme Customization
+
+Users can switch between Light, Dark, and System themes using the theme switcher in the top-right corner. Theme preference is saved in browser cookies.
 
 ## Automatic Deployment
 
