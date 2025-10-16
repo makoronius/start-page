@@ -193,6 +193,22 @@ def update_config():
     """Update complete configuration (admin only)"""
     try:
         new_config = request.json
+
+        # Auto-grant admin roles access to any new categories
+        if 'categories' in new_config:
+            users_data = load_users()
+            new_category_names = [cat['name'] for cat in new_config['categories']]
+
+            # Add new categories to all admin roles
+            for role in users_data.get('roles', []):
+                if role.get('is_admin') or role['name'] == 'Admins':
+                    role_cats = set(role.get('categories', []))
+                    role_cats.update(new_category_names)
+                    role['categories'] = list(role_cats)
+
+            # Save updated roles
+            save_users(users_data)
+
         if save_config(new_config):
             return jsonify({"success": True, "message": "Configuration updated"}), 200
         else:
