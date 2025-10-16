@@ -4,6 +4,9 @@ settings:
   subtitle: "Your development environment at a glance"
   auto_refresh_minutes: 5
   ssh_user: mark
+  csv_path: /scripts/port-mappings.csv
+  backup_path: /scripts/backups
+  powershell_script_path: /scripts/Update-DockerPortProxy.ps1
 
 services:
   - name: "Whisper Transcriber"

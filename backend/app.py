@@ -82,9 +82,72 @@ def update_services():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/api/csv/generate', methods=['GET'])
-def generate_csv():
-    """Generate CSV file from port mappings in config"""
+@app.route('/api/csv/generate', methods=['POST'])
+def generate_csv_to_server():
+    """Generate CSV file and save to configured path on server"""
+    try:
+        config = load_config()
+        if not config or 'port_mappings' not in config:
+            return jsonify({"error": "No port mappings found in configuration"}), 404
+
+        # Get settings
+        settings = config.get('settings', {})
+        csv_path = settings.get('csv_path', '/scripts/port-mappings.csv')
+        backup_path = settings.get('backup_path', '/scripts/backups')
+
+        # Create backup directory if it doesn't exist
+        os.makedirs(backup_path, exist_ok=True)
+
+        # Create backup of existing file if it exists
+        if os.path.exists(csv_path):
+            from datetime import datetime
+            backup_filename = f"port-mappings_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            backup_full_path = os.path.join(backup_path, backup_filename)
+            try:
+                import shutil
+                shutil.copy2(csv_path, backup_full_path)
+                backup_created = True
+            except Exception as e:
+                print(f"Warning: Could not create backup: {e}")
+                backup_created = False
+        else:
+            backup_created = False
+
+        # Generate CSV content
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        writer.writerow(['Port', 'Service', 'Description'])
+
+        # Write port mappings
+        for mapping in config['port_mappings']:
+            writer.writerow([
+                mapping.get('port', ''),
+                mapping.get('service', ''),
+                mapping.get('description', '')
+            ])
+
+        # Write to file
+        csv_dir = os.path.dirname(csv_path)
+        os.makedirs(csv_dir, exist_ok=True)
+
+        with open(csv_path, 'w', newline='') as f:
+            f.write(output.getvalue())
+
+        return jsonify({
+            "success": True,
+            "message": f"CSV generated successfully at {csv_path}",
+            "backup_created": backup_created,
+            "csv_path": csv_path
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/csv/download', methods=['GET'])
+def download_csv():
+    """Download CSV file from port mappings in config"""
     try:
         config = load_config()
         if not config or 'port_mappings' not in config:
