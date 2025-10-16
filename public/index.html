@@ -1394,6 +1394,14 @@
                 if (currentUser.is_local) {
                     document.getElementById('user-info').style.display = 'none';
                 }
+
+                // Show/hide Config tab based on admin status
+                const configBtn = document.getElementById('config-tab-btn');
+                if (currentUser.is_admin) {
+                    configBtn.style.display = 'inline-block';
+                } else {
+                    configBtn.style.display = 'none';
+                }
             }
         }
 
