@@ -490,6 +490,83 @@ def get_roles():
     users_data = load_users()
     return jsonify(users_data.get('roles', [])), 200
 
+@app.route('/api/roles', methods=['POST'])
+@admin_required
+def create_role():
+    """Create new role (admin only)"""
+    try:
+        data = request.json
+        name = data.get('name')
+        description = data.get('description', '')
+        categories = data.get('categories', [])
+
+        if not name:
+            return jsonify({"error": "Role name required"}), 400
+
+        users_data = load_users()
+
+        # Check if role already exists
+        for role in users_data.get('roles', []):
+            if role['name'] == name:
+                return jsonify({"error": "Role already exists"}), 400
+
+        # Add new role
+        if 'roles' not in users_data:
+            users_data['roles'] = []
+
+        users_data['roles'].append({
+            'name': name,
+            'description': description,
+            'categories': categories
+        })
+
+        if save_users(users_data):
+            return jsonify({"success": True, "message": "Role created"}), 200
+        else:
+            return jsonify({"error": "Failed to save role"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/roles', methods=['PUT'])
+@admin_required
+def update_roles():
+    """Update all roles (admin only)"""
+    try:
+        data = request.json
+        users_data = load_users()
+
+        # Update roles
+        users_data['roles'] = data.get('roles', [])
+
+        if save_users(users_data):
+            return jsonify({"success": True, "message": "Roles updated"}), 200
+        else:
+            return jsonify({"error": "Failed to save roles"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/roles/<name>', methods=['DELETE'])
+@admin_required
+def delete_role(name):
+    """Delete role (admin only)"""
+    try:
+        users_data = load_users()
+
+        # Check if any users have this role
+        for user in users_data.get('users', []):
+            if name in user.get('roles', []):
+                return jsonify({"error": f"Cannot delete role assigned to users. Remove it from all users first."}), 400
+
+        # Remove role
+        users_data['roles'] = [r for r in users_data.get('roles', []) if r['name'] != name]
+
+        if save_users(users_data):
+            return jsonify({"success": True, "message": "Role deleted"}), 200
+        else:
+            return jsonify({"error": "Failed to delete role"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 @app.route('/api/categories', methods=['GET'])
 @login_required
 def get_categories():

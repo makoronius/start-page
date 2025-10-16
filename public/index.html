@@ -1084,6 +1084,7 @@
 
                     <h3 style="margin-bottom: 1rem; margin-top: 2rem;">Roles & Access Rights</h3>
                     <div id="roles-editor"></div>
+                    <button class="btn btn-primary" onclick="showAddRoleModal()" style="margin-top: 1rem;">+ Add New Role</button>
                 </div>
             </div>
         </div>
@@ -1168,6 +1169,35 @@
             <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                 <button class="btn btn-primary" onclick="saveUser()">Save User</button>
                 <button class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Edit Modal -->
+    <div id="role-modal" class="modal-overlay hidden" onclick="closeRoleModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeRoleModal()">&times;</button>
+            <h2 id="role-modal-title">Add Role</h2>
+            <div id="role-modal-message"></div>
+
+            <div class="form-group">
+                <label for="role-name">Role Name *</label>
+                <input type="text" id="role-name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role-description">Description</label>
+                <input type="text" id="role-description">
+            </div>
+
+            <div class="form-group">
+                <label>Access to Categories</label>
+                <div id="role-categories-checkboxes"></div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="saveRole()">Save Role</button>
+                <button class="btn btn-secondary" onclick="closeRoleModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1509,9 +1539,15 @@
 
         // State Management
         function saveState() {
+            // Get current config sub-tab
+            const activeSubTab = document.querySelector('.sub-tab-btn.active');
+            const currentConfigSubTab = activeSubTab ?
+                activeSubTab.textContent.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-') : 'general';
+
             const state = {
                 currentTab: getCurrentTab(),
                 currentCategory: window.currentCategory || null,
+                currentConfigSubTab: currentConfigSubTab,
                 timestamp: Date.now()
             };
             localStorage.setItem('dashboardState', JSON.stringify(state));
@@ -1564,6 +1600,36 @@
                                 renderSettingsEditor();
                                 renderCategoriesEditor();
                                 renderServicesByCategory_Config();
+
+                                // Restore config sub-tab
+                                if (state.currentConfigSubTab) {
+                                    // Map display name back to sub-tab name
+                                    let subTabName = 'general';
+                                    if (state.currentConfigSubTab.includes('users')) {
+                                        subTabName = 'users';
+                                    } else if (state.currentConfigSubTab.includes('services')) {
+                                        subTabName = 'services';
+                                    }
+
+                                    // Update sub-tab buttons
+                                    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                                        btn.classList.remove('active');
+                                        if (btn.textContent.toLowerCase().includes(subTabName) ||
+                                            (subTabName === 'general' && btn.textContent.includes('General'))) {
+                                            btn.classList.add('active');
+                                        }
+                                    });
+
+                                    // Update sub-tab content
+                                    document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active'));
+                                    document.getElementById(`${subTabName}-subtab`)?.classList.add('active');
+
+                                    // Load data if needed
+                                    if (subTabName === 'users') {
+                                        loadUsers();
+                                        loadRoles();
+                                    }
+                                }
                             }
                         }
                     });
@@ -1606,6 +1672,9 @@
                 loadUsers();
                 loadRoles();
             }
+
+            // Save state
+            saveState();
         }
 
         // Load configuration
@@ -2287,10 +2356,11 @@
                 if (!response.ok) throw new Error('Failed to load users');
 
                 const users = await response.json();
+                console.log('Loaded users:', users); // Debug
                 renderUsersList(users);
             } catch (error) {
                 console.error('Error loading users:', error);
-                document.getElementById('users-list').innerHTML = '<p class="error">Failed to load users</p>';
+                document.getElementById('users-list').innerHTML = '<p style="color: var(--text-primary);">Failed to load users. Please try refreshing.</p>';
             }
         }
 
@@ -2345,31 +2415,92 @@
             container.innerHTML = '';
 
             if (!roles || roles.length === 0) {
-                container.innerHTML = '<p>No roles defined.</p>';
+                container.innerHTML = '<p style="color: var(--text-primary);">No roles defined.</p>';
                 return;
             }
 
-            roles.forEach(role => {
+            roles.forEach((role, roleIndex) => {
                 const card = document.createElement('div');
                 card.className = 'role-editor-card';
+
+                // Get all available categories
+                const availableCategories = config?.categories || [];
+
                 card.innerHTML = `
                     <div class="role-header">
                         <div>
                             <div class="role-name">${role.name}</div>
                             <div class="role-description">${role.description || ''}</div>
                         </div>
+                        <div>
+                            <button class="btn btn-danger" onclick="deleteRole('${role.name}')">🗑️ Delete</button>
+                        </div>
                     </div>
                     <div>
                         <strong>Access to categories:</strong>
-                        <div class="role-categories">
-                            ${role.categories && role.categories.length > 0
-                                ? role.categories.map(cat => `<span class="role-badge">${cat}</span>`).join('')
-                                : '<span style="color: var(--text-secondary);">No categories assigned</span>'}
+                        <div style="margin-top: 0.75rem;" id="role-${roleIndex}-categories">
+                            ${availableCategories.map(cat => {
+                                const isChecked = role.categories && role.categories.includes(cat.name);
+                                return `
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="checkbox"
+                                               value="${cat.name}"
+                                               ${isChecked ? 'checked' : ''}
+                                               onchange="updateRoleCategory('${role.name}', '${cat.name}', this.checked)">
+                                        <span>${cat.name}</span>
+                                    </label>
+                                `;
+                            }).join('')}
                         </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="saveRoleChanges()">💾 Save Changes</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
+        }
+
+        function updateRoleCategory(roleName, categoryName, isChecked) {
+            if (!usersData || !usersData.roles) return;
+
+            const role = usersData.roles.find(r => r.name === roleName);
+            if (!role) return;
+
+            if (!role.categories) role.categories = [];
+
+            if (isChecked) {
+                if (!role.categories.includes(categoryName)) {
+                    role.categories.push(categoryName);
+                }
+            } else {
+                role.categories = role.categories.filter(c => c !== categoryName);
+            }
+        }
+
+        async function saveRoleChanges() {
+            try {
+                // Save to users.yaml through backend
+                const response = await fetch('/api/roles', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ roles: usersData.roles })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to save roles');
+                }
+
+                await customAlert('Role changes saved successfully!', 'Success', 'success');
+                loadRoles();
+            } catch (error) {
+                console.error('Error saving roles:', error);
+                await customAlert('Failed to save role changes: ' + error.message, 'Error', 'error');
+            }
         }
 
         function showAddUserModal() {
@@ -2547,6 +2678,114 @@
             document.getElementById('user-modal').classList.add('hidden');
             document.getElementById('user-password').placeholder = '';
             currentEditingUser = null;
+        }
+
+        // Role Management Functions
+        function showAddRoleModal() {
+            document.getElementById('role-modal-title').textContent = 'Add New Role';
+            document.getElementById('role-name').value = '';
+            document.getElementById('role-description').value = '';
+            document.getElementById('role-modal-message').innerHTML = '';
+
+            // Load categories checkboxes
+            renderCategoriesCheckboxes([]);
+
+            document.getElementById('role-modal').classList.remove('hidden');
+        }
+
+        function renderCategoriesCheckboxes(selectedCategories = []) {
+            const container = document.getElementById('role-categories-checkboxes');
+            container.innerHTML = '';
+
+            if (!config || !config.categories || config.categories.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">No categories available</p>';
+                return;
+            }
+
+            config.categories.forEach(category => {
+                const isChecked = selectedCategories.includes(category.name);
+                const checkbox = document.createElement('label');
+                checkbox.style.display = 'flex';
+                checkbox.style.alignItems = 'center';
+                checkbox.style.gap = '0.5rem';
+                checkbox.style.marginBottom = '0.5rem';
+                checkbox.innerHTML = `
+                    <input type="checkbox" value="${category.name}" ${isChecked ? 'checked' : ''}>
+                    <span>${category.name}</span>
+                `;
+                container.appendChild(checkbox);
+            });
+        }
+
+        async function saveRole() {
+            const name = document.getElementById('role-name').value.trim();
+            const description = document.getElementById('role-description').value.trim();
+            const messageDiv = document.getElementById('role-modal-message');
+
+            // Get selected categories
+            const checkboxes = document.querySelectorAll('#role-categories-checkboxes input[type="checkbox"]:checked');
+            const categories = Array.from(checkboxes).map(cb => cb.value);
+
+            if (!name) {
+                messageDiv.innerHTML = '<div class="error">Role name is required</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/roles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ name, description, categories })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save role');
+                }
+
+                await customAlert('Role created successfully!', 'Success', 'success');
+                closeRoleModal();
+                loadRoles();
+            } catch (error) {
+                console.error('Error saving role:', error);
+                messageDiv.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        }
+
+        async function deleteRole(roleName) {
+            const confirmed = await customConfirm(
+                `Are you sure you want to delete the role "${roleName}"?`,
+                'Delete Role',
+                'warning'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/roles/${roleName}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete role');
+                }
+
+                await customAlert('Role deleted successfully', 'Success', 'success');
+                loadRoles();
+            } catch (error) {
+                console.error('Error deleting role:', error);
+                await customAlert(`Failed to delete role: ${error.message}`, 'Error', 'error');
+            }
+        }
+
+        function closeRoleModal(event) {
+            if (event && event.target.id !== 'role-modal') return;
+            document.getElementById('role-modal').classList.add('hidden');
         }
 
         // Initialize - check authentication first
