@@ -49,17 +49,25 @@ def health():
 @app.route('/api/auth/status', methods=['GET'])
 def auth_status():
     """Check authentication status"""
+    print(f"[DEBUG] auth_status: X-Real-IP = {request.headers.get('X-Real-IP')}")
+    print(f"[DEBUG] auth_status: X-Forwarded-For = {request.headers.get('X-Forwarded-For')}")
+    print(f"[DEBUG] auth_status: remote_addr = {request.remote_addr}")
+    print(f"[DEBUG] auth_status: session = {dict(session)}")
+
     if is_local_request():
+        print(f"[DEBUG] auth_status: Is local request, returning localhost admin")
         return jsonify({
             "authenticated": True,
             "user": {
                 "username": "localhost",
                 "roles": ["Admins"],
-                "is_local": True
+                "is_local": True,
+                "is_admin": True
             }
         }), 200
 
     user = get_current_user()
+    print(f"[DEBUG] auth_status: user = {user}")
     if user:
         return jsonify({
             "authenticated": True,
