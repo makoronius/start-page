@@ -1,11 +1,12 @@
 # Update-DockerPortProxy.ps1
 # Purpose: Maintain Windows portproxy mappings for WSL2 using CSV configuration
 # Requires Administrator privileges
-# Usage: .\Update-DockerPortProxy.ps1 [-CsvPath <path>] [-ListenAddress <address>]
+# Usage: .\Update-DockerPortProxy.ps1 [-CsvPath <path>] [-ListenAddress <address>] [-RegisterTask]
 
 param(
     [string]$CsvPath = "$PSScriptRoot\port-mappings.csv",
-    [string]$ListenAddress = "0.0.0.0"
+    [string]$ListenAddress = "0.0.0.0",
+    [switch]$RegisterTask
 )
 
 Write-Host "=== WSL2 Port-Proxy Manager (CSV-based) ===" -ForegroundColor Cyan
@@ -182,10 +183,60 @@ foreach ($mapping in $portMappings) {
 }
 
 Write-Host ""
+
+# Register Task Scheduler if requested
+if ($RegisterTask) {
+    Write-Host "=== Task Scheduler Registration ===" -ForegroundColor Cyan
+    Write-Host ""
+
+    $ScriptPath = $PSCommandPath
+    $TaskName = "WSL2 Port Proxy Auto-Update"
+
+    try {
+        # Check if task already exists
+        $existingTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+
+        if ($existingTask) {
+            Write-Host "  Task already exists. Unregistering..." -ForegroundColor Yellow
+            Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+        }
+
+        # Create the scheduled task
+        $action = New-ScheduledTaskAction -Execute "powershell.exe" `
+            -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`""
+
+        $trigger = New-ScheduledTaskTrigger -AtStartup
+
+        $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+
+        Register-ScheduledTask `
+            -TaskName $TaskName `
+            -Action $action `
+            -Trigger $trigger `
+            -Principal $principal `
+            -Settings $settings `
+            -Description "Refresh Docker and SSH portproxy mappings for WSL2 on every startup" | Out-Null
+
+        Write-Host "  ✓ Task registered successfully: $TaskName" -ForegroundColor Green
+        Write-Host "  Will run at system startup as SYSTEM" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  To unregister: Unregister-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
+        Write-Host ""
+    } catch {
+        Write-Host "  ERROR: Failed to register task" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
 Write-Host "=== Notes ===" -ForegroundColor Cyan
 Write-Host "  - WSL IP addresses change on reboot" -ForegroundColor Yellow
-Write-Host "  - Run this script after restarting WSL" -ForegroundColor Yellow
+Write-Host "  - Run with -RegisterTask to auto-run at startup" -ForegroundColor Yellow
 Write-Host "  - Edit '$CsvPath' to add/remove ports" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "To register task scheduler:" -ForegroundColor Gray
+Write-Host "  .\Update-DockerPortProxy.ps1 -RegisterTask" -ForegroundColor White
 Write-Host ""
 Write-Host "To remove all port proxies:" -ForegroundColor Gray
 Write-Host "  netsh interface portproxy reset" -ForegroundColor White
