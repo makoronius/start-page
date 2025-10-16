@@ -1600,6 +1600,12 @@
         function restoreTab() {
             const state = loadState();
             if (state) {
+                // Prevent non-admin users from restoring config tab
+                if (state.currentTab === 'config' && currentUser && !currentUser.is_admin) {
+                    // Stay on default services tab for non-admin users
+                    return;
+                }
+
                 // Restore category if in services view
                 if (state.currentCategory && state.currentTab === 'services') {
                     switchCategory(state.currentCategory);
@@ -1662,6 +1668,12 @@
 
         // Tab Management
         function switchTab(tabName) {
+            // Prevent non-admin users from accessing config tab
+            if (tabName === 'config' && currentUser && !currentUser.is_admin) {
+                // Redirect to dashboard
+                tabName = 'dashboard';
+            }
+
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
