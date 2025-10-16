@@ -16,6 +16,10 @@ from auth import (
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)  # Infinite sessions
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True when using HTTPS
+app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
 CORS(app, supports_credentials=True)
 
 CONFIG_FILE = '/app/config.yaml'
@@ -49,13 +53,7 @@ def health():
 @app.route('/api/auth/status', methods=['GET'])
 def auth_status():
     """Check authentication status"""
-    print(f"[DEBUG] auth_status: X-Real-IP = {request.headers.get('X-Real-IP')}")
-    print(f"[DEBUG] auth_status: X-Forwarded-For = {request.headers.get('X-Forwarded-For')}")
-    print(f"[DEBUG] auth_status: remote_addr = {request.remote_addr}")
-    print(f"[DEBUG] auth_status: session = {dict(session)}")
-
     if is_local_request():
-        print(f"[DEBUG] auth_status: Is local request, returning localhost admin")
         return jsonify({
             "authenticated": True,
             "user": {
@@ -67,7 +65,6 @@ def auth_status():
         }), 200
 
     user = get_current_user()
-    print(f"[DEBUG] auth_status: user = {user}")
     if user:
         return jsonify({
             "authenticated": True,

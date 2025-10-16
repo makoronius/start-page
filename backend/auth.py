@@ -117,18 +117,10 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         # Allow local requests
         if is_local_request():
-            print(f"[DEBUG] admin_required: Local request allowed")
             return f(*args, **kwargs)
 
         user = get_current_user()
-        print(f"[DEBUG] admin_required: user = {user}")
-        print(f"[DEBUG] admin_required: session = {dict(session)}")
-        print(f"[DEBUG] admin_required: X-Real-IP = {request.headers.get('X-Real-IP')}")
-        print(f"[DEBUG] admin_required: X-Forwarded-For = {request.headers.get('X-Forwarded-For')}")
-        print(f"[DEBUG] admin_required: remote_addr = {request.remote_addr}")
-
         if not user:
-            print(f"[DEBUG] admin_required: No user found, returning 403")
             return jsonify({"error": "Admin access required"}), 403
 
         # Check if user has any role marked as administrator
@@ -139,10 +131,8 @@ def admin_required(f):
             if role['name'] in user_roles:
                 # Check if role has administrator flag or is the Admins role
                 if role.get('is_admin', False) or role['name'] == 'Admins':
-                    print(f"[DEBUG] admin_required: Access granted for user {user.get('username')}")
                     return f(*args, **kwargs)
 
-        print(f"[DEBUG] admin_required: User has no admin role, returning 403")
         return jsonify({"error": "Admin access required"}), 403
 
     return decorated_function
