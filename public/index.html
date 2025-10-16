@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Services Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+
+        .service-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 1rem;
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .service-description {
+            color: #718096;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .service-url {
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .service-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .status-running {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 3rem;
+            opacity: 0.8;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .info-section h2 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .info-section code {
+            background: #f7fafc;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+        }
+
+        .script-info {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .script-info pre {
+            background: #2d3748;
+            color: #68d391;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Local Services Dashboard</h1>
+            <p>Your development environment at a glance</p>
+        </header>
+
+        <div class="services-grid">
+            <a href="http://100.79.70.15:5001" class="service-card">
+                <div class="service-icon">🎙️</div>
+                <div class="service-title">Whisper Transcriber</div>
+                <div class="service-description">
+                    GPU-accelerated YouTube transcription with automatic subtitle generation
+                </div>
+                <div class="service-url">http://100.79.70.15:5001</div>
+                <span class="service-status status-running">Running</span>
+            </a>
+
+            <a href="http://100.79.70.15:3000" class="service-card">
+                <div class="service-icon">☕</div>
+                <div class="service-title">Gitea</div>
+                <div class="service-description">
+                    Self-hosted Git service with web interface and CI/CD integration
+                </div>
+                <div class="service-url">http://100.79.70.15:3000</div>
+                <span class="service-status status-running">Running</span>
+            </a>
+
+            <a href="https://100.79.70.15:9443" class="service-card">
+                <div class="service-icon">🐳</div>
+                <div class="service-title">Portainer</div>
+                <div class="service-description">
+                    Docker container management UI for easy deployment and monitoring
+                </div>
+                <div class="service-url">https://100.79.70.15:9443</div>
+                <span class="service-status status-running">Running</span>
+            </a>
+
+            <a href="http://100.79.70.15:9000/health" class="service-card">
+                <div class="service-icon">🔗</div>
+                <div class="service-title">Webhook Server</div>
+                <div class="service-description">
+                    CI/CD webhook receiver for automatic deployment on git push
+                </div>
+                <div class="service-url">http://100.79.70.15:9000</div>
+                <span class="service-status status-running">Running</span>
+            </a>
+        </div>
+
+        <div class="info-section">
+            <h2>📡 Server Information</h2>
+            <p><strong>Host:</strong> <code>100.79.70.15</code> (Windows with WSL2)</p>
+            <p><strong>SSH Access:</strong> <code>ssh mark@100.79.70.15</code></p>
+            <p><strong>Docker:</strong> Running in WSL2</p>
+
+            <div class="script-info">
+                <h3>🔧 Port Proxy Management</h3>
+                <p>To expose new services from WSL2 to Windows network:</p>
+                <pre>
+# On Windows (as Administrator)
+cd C:\Scripts
+.\Update-DockerPortProxy.ps1
+
+# Add new ports by editing:
+C:\Scripts\port-mappings.csv</pre>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>🔄 CI/CD Pipeline</h2>
+            <p>Automatic deployment is active! When you push code to Gitea:</p>
+            <ol style="margin-left: 2rem; margin-top: 1rem; line-height: 2;">
+                <li>Push to <code>main</code> branch → Triggers webhook</li>
+                <li>Webhook verifies signature</li>
+                <li>SSH connection to deployment host</li>
+                <li>Pulls latest code from Gitea</li>
+                <li>Rebuilds Docker containers</li>
+                <li>Restarts services with new code</li>
+            </ol>
+
+            <div class="script-info">
+                <h3>📝 Example Deployment</h3>
+                <pre>
+git add .
+git commit -m "Your changes"
+git push gitea main
+
+# Deployment happens automatically!
+# Check logs: ssh mark@100.79.70.15 "docker logs webhook-server --tail 50"</pre>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📚 Repositories</h2>
+            <ul style="margin-left: 2rem; margin-top: 1rem; line-height: 2;">
+                <li><strong>Transcriber:</strong> <code>http://100.79.70.15:3000/mark/transcriber</code></li>
+                <li><strong>Webhook Server:</strong> <code>http://100.79.70.15:3000/mark/webhook-server</code></li>
+                <li><strong>Start Page:</strong> <code>http://100.79.70.15:3000/mark/start-page</code></li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>Powered by Docker • Gitea • WSL2</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                Built with ❤️ by Claude Code
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-refresh every 5 minutes
+        setTimeout(() => location.reload(), 5 * 60 * 1000);
+    </script>
+</body>
+</html>

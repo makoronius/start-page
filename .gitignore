@@ -1,0 +1,21 @@
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.env.local
+
+# Backups
+*.bak
+*.backup
