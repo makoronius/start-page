@@ -785,6 +785,61 @@
             }
         }
 
+        // State Management
+        function saveState() {
+            const state = {
+                currentTab: getCurrentTab(),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('dashboardState', JSON.stringify(state));
+        }
+
+        function loadState() {
+            try {
+                const savedState = localStorage.getItem('dashboardState');
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    return state;
+                }
+            } catch (e) {
+                console.error('Error loading state:', e);
+            }
+            return null;
+        }
+
+        function getCurrentTab() {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                return activeTab.id.replace('-tab', '');
+            }
+            return 'services';
+        }
+
+        function restoreTab() {
+            const state = loadState();
+            if (state && state.currentTab) {
+                // Find the tab button and click it programmatically
+                const tabButtons = document.querySelectorAll('.tab-btn');
+                tabButtons.forEach((btn, index) => {
+                    if (btn.textContent.toLowerCase().includes(state.currentTab.toLowerCase())) {
+                        // Remove active from all
+                        tabButtons.forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                        // Add active to target
+                        btn.classList.add('active');
+                        document.getElementById(`${state.currentTab}-tab`).classList.add('active');
+
+                        // Render config if needed
+                        if (state.currentTab === 'config' && config) {
+                            renderSettingsEditor();
+                            renderConfigEditor();
+                        }
+                    }
+                });
+            }
+        }
+
         // Tab Management
         function switchTab(tabName) {
             // Update tab buttons
@@ -799,6 +854,9 @@
                 renderSettingsEditor();
                 renderConfigEditor();
             }
+
+            // Save state
+            saveState();
         }
 
         // Load configuration
@@ -825,6 +883,9 @@
                 }
 
                 renderServices();
+
+                // Restore tab state after config is loaded
+                setTimeout(() => restoreTab(), 100);
             } catch (error) {
                 console.error('Error loading config:', error);
                 document.getElementById('loading').innerHTML = '<p style="color: #f56565;">Error loading services. Please refresh the page.</p>';
