@@ -2077,17 +2077,20 @@
                     body: JSON.stringify(config)
                 });
 
-                if (!response.ok) throw new Error('Failed to save configuration');
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to save configuration');
+                }
 
-                messageDiv.innerHTML = '<div class="success">Configuration saved successfully!</div>';
+                messageDiv.innerHTML = '<div class="success">✓ Configuration saved successfully!</div>';
 
-                // Reload config to get fresh data
-                await loadConfig();
-
-                // Re-render config editors
+                // Re-render config editors with current config
                 renderSettingsEditor();
                 renderCategoriesEditor();
                 renderServicesByCategory_Config();
+
+                // Also update the main view's category tabs without switching tabs
+                renderCategoryTabs();
 
                 setTimeout(() => {
                     messageDiv.innerHTML = '';
