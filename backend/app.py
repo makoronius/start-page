@@ -98,6 +98,61 @@ def logout():
     session.clear()
     return jsonify({"success": True}), 200
 
+@app.route('/api/auth/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Change current user's password"""
+    try:
+        # Don't allow password change for localhost users
+        if is_local_request():
+            return jsonify({"error": "Cannot change password for localhost access"}), 400
+
+        data = request.json
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+
+        if not current_password or not new_password:
+            return jsonify({"error": "Current and new password required"}), 400
+
+        if len(new_password) < 6:
+            return jsonify({"error": "New password must be at least 6 characters"}), 400
+
+        username = session.get('username')
+        users_data = load_users()
+
+        # Find user and verify current password
+        for user in users_data.get('users', []):
+            if user['username'] == username:
+                if user['password'] != current_password:
+                    return jsonify({"error": "Current password is incorrect"}), 401
+
+                # Update password
+                user['password'] = new_password
+
+                if save_users(users_data):
+                    return jsonify({"success": True, "message": "Password changed successfully"}), 200
+                else:
+                    return jsonify({"error": "Failed to save password"}), 500
+
+        return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/auth/profile', methods=['GET'])
+@login_required
+def get_profile():
+    """Get current user profile"""
+    user = get_current_user()
+    if user:
+        return jsonify({
+            'username': user['username'],
+            'email': user.get('email', ''),
+            'roles': user['roles'],
+            'is_local': user.get('is_local', False)
+        }), 200
+    else:
+        return jsonify({"error": "Not authenticated"}), 401
+
 @app.route('/api/config', methods=['GET'])
 @login_required
 def get_config():

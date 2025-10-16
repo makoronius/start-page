@@ -498,6 +498,78 @@
             display: none !important;
         }
 
+        /* Profile modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 16px var(--shadow-hover);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            float: right;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .profile-info {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--input-bg);
+            border-radius: 8px;
+        }
+
+        .profile-info p {
+            margin: 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .profile-info strong {
+            color: var(--text-primary);
+        }
+
+        .username-link {
+            color: var(--text-primary);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .username-link:hover {
+            color: #667eea;
+        }
+
         .error {
             background: #fed7d7;
             color: #742a2a;
@@ -598,7 +670,7 @@
     <div id="main-dashboard" class="container hidden">
         <header>
             <div class="user-info" id="user-info">
-                <span id="username-display"></span>
+                <a href="#" class="username-link" id="username-display" onclick="showProfile(event)"></a>
                 <button class="logout-btn" onclick="handleLogout()">Logout</button>
             </div>
             <div class="theme-switcher">
@@ -642,6 +714,42 @@
         </div>
     </div> <!-- End of config-tab -->
     </div> <!-- End of main-dashboard -->
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal-overlay hidden" onclick="closeProfileIfOutside(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeProfile()">&times;</button>
+            <h2>User Profile</h2>
+
+            <div class="profile-info">
+                <p><strong>Username:</strong> <span id="profile-username"></span></p>
+                <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                <p><strong>Roles:</strong> <span id="profile-roles"></span></p>
+            </div>
+
+            <div id="password-change-section">
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Change Password</h3>
+                <div id="password-message"></div>
+
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" required>
+                </div>
+
+                <button class="btn btn-primary" onclick="changePassword()">Change Password</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         let config = null;
@@ -735,6 +843,108 @@
                 if (currentUser.is_local) {
                     document.getElementById('user-info').style.display = 'none';
                 }
+            }
+        }
+
+        // Profile functions
+        function showProfile(event) {
+            if (event) event.preventDefault();
+
+            // Load profile data
+            fetch('/api/auth/profile', {
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('profile-username').textContent = data.username;
+                document.getElementById('profile-email').textContent = data.email || 'Not set';
+                document.getElementById('profile-roles').textContent = data.roles.join(', ');
+
+                // Hide password change for local users
+                if (data.is_local) {
+                    document.getElementById('password-change-section').style.display = 'none';
+                } else {
+                    document.getElementById('password-change-section').style.display = 'block';
+                }
+
+                document.getElementById('profile-modal').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error loading profile:', error);
+            });
+        }
+
+        function closeProfile() {
+            document.getElementById('profile-modal').classList.add('hidden');
+            // Clear password fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('password-message').innerHTML = '';
+        }
+
+        function closeProfileIfOutside(event) {
+            if (event.target.id === 'profile-modal') {
+                closeProfile();
+            }
+        }
+
+        async function changePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const messageDiv = document.getElementById('password-message');
+
+            messageDiv.innerHTML = '';
+
+            // Validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                messageDiv.innerHTML = '<div class="error">All fields are required</div>';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                messageDiv.innerHTML = '<div class="error">New passwords do not match</div>';
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                messageDiv.innerHTML = '<div class="error">New password must be at least 6 characters</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.innerHTML = '<div class="success">Password changed successfully!</div>';
+                    // Clear fields
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeProfile();
+                    }, 2000);
+                } else {
+                    messageDiv.innerHTML = `<div class="error">${data.error || 'Failed to change password'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                messageDiv.innerHTML = '<div class="error">Connection error. Please try again.</div>';
             }
         }
 
