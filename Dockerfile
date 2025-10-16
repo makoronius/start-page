@@ -14,8 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/app.py /app/
 COPY backend/auth.py /app/
-COPY config.yaml /app/
-COPY users.yaml /app/
+# Note: config.yaml and users.yaml are mounted as volumes to preserve changes
+# They should exist on the host before starting the container
 
 # Setup nginx
 COPY public/ /usr/share/nginx/html/
