@@ -1191,6 +1191,13 @@
             </div>
 
             <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="role-is-admin">
+                    <span>Administrator (can access Config tab)</span>
+                </label>
+            </div>
+
+            <div class="form-group">
                 <label>Access to Categories</label>
                 <div id="role-categories-checkboxes"></div>
             </div>
@@ -2464,6 +2471,14 @@
                             <button class="btn btn-danger" onclick="deleteRole('${role.name}')">🗑️ Delete</button>
                         </div>
                     </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                            <input type="checkbox"
+                                   ${role.is_admin ? 'checked' : ''}
+                                   onchange="updateRoleAdmin('${role.name}', this.checked)">
+                            <span>Administrator (can access Config tab)</span>
+                        </label>
+                    </div>
                     <div>
                         <strong>Access to categories:</strong>
                         <div style="margin-top: 0.75rem;" id="role-${roleIndex}-categories">
@@ -2504,6 +2519,15 @@
             } else {
                 role.categories = role.categories.filter(c => c !== categoryName);
             }
+        }
+
+        function updateRoleAdmin(roleName, isAdmin) {
+            if (!usersData || !usersData.roles) return;
+
+            const role = usersData.roles.find(r => r.name === roleName);
+            if (!role) return;
+
+            role.is_admin = isAdmin;
         }
 
         async function saveRoleChanges() {
@@ -2713,6 +2737,7 @@
             document.getElementById('role-modal-title').textContent = 'Add New Role';
             document.getElementById('role-name').value = '';
             document.getElementById('role-description').value = '';
+            document.getElementById('role-is-admin').checked = false;
             document.getElementById('role-modal-message').innerHTML = '';
 
             // Load categories checkboxes
@@ -2748,6 +2773,7 @@
         async function saveRole() {
             const name = document.getElementById('role-name').value.trim();
             const description = document.getElementById('role-description').value.trim();
+            const isAdmin = document.getElementById('role-is-admin').checked;
             const messageDiv = document.getElementById('role-modal-message');
 
             // Get selected categories
@@ -2766,7 +2792,7 @@
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
-                    body: JSON.stringify({ name, description, categories })
+                    body: JSON.stringify({ name, description, categories, is_admin: isAdmin })
                 });
 
                 if (!response.ok) {

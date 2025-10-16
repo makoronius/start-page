@@ -109,10 +109,21 @@ def admin_required(f):
             return f(*args, **kwargs)
 
         user = get_current_user()
-        if not user or 'Admins' not in user['roles']:
+        if not user:
             return jsonify({"error": "Admin access required"}), 403
 
-        return f(*args, **kwargs)
+        # Check if user has any role marked as administrator
+        users_data = load_users()
+        user_roles = user.get('roles', [])
+
+        for role in users_data.get('roles', []):
+            if role['name'] in user_roles:
+                # Check if role has administrator flag or is the Admins role
+                if role.get('is_admin', False) or role['name'] == 'Admins':
+                    return f(*args, **kwargs)
+
+        return jsonify({"error": "Admin access required"}), 403
+
     return decorated_function
 
 def authenticate_user(username, password):

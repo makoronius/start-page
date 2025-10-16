@@ -499,6 +499,7 @@ def create_role():
         name = data.get('name')
         description = data.get('description', '')
         categories = data.get('categories', [])
+        is_admin = data.get('is_admin', False)
 
         if not name:
             return jsonify({"error": "Role name required"}), 400
@@ -517,7 +518,8 @@ def create_role():
         users_data['roles'].append({
             'name': name,
             'description': description,
-            'categories': categories
+            'categories': categories,
+            'is_admin': is_admin
         })
 
         if save_users(users_data):
