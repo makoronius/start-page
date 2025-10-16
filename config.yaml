@@ -1,0 +1,98 @@
+settings:
+  hostname: hypervisor
+  title: "Local Services Dashboard"
+  subtitle: "Your development environment at a glance"
+  auto_refresh_minutes: 5
+  ssh_user: mark
+
+services:
+  - name: "Whisper Transcriber"
+    icon: "🎙️"
+    url: "http://hypervisor:5001"
+    description: "GPU-accelerated YouTube transcription with automatic subtitle generation"
+    port: 5001
+    local: true
+    status: running
+
+  - name: "PyJob Server"
+    icon: "⚙️"
+    url: "http://hypervisor:5000"
+    description: "Compliance Job Server for automated task processing and workflow management"
+    port: 5000
+    local: true
+    status: running
+
+  - name: "Gitea"
+    icon: "☕"
+    url: "http://hypervisor:3000"
+    description: "Self-hosted Git service with web interface and CI/CD integration"
+    port: 3000
+    local: true
+    status: running
+
+  - name: "Portainer"
+    icon: "🐳"
+    url: "https://hypervisor:9443"
+    description: "Docker container management UI for easy deployment and monitoring"
+    port: 9443
+    local: true
+    status: running
+
+  - name: "Webhook Server"
+    icon: "🔗"
+    url: "http://hypervisor:9000/health"
+    description: "CI/CD webhook receiver for automatic deployment on git push"
+    port: 9000
+    local: true
+    status: running
+
+port_mappings:
+  - port: 22
+    service: "SSH"
+    description: "SSH access to WSL"
+
+  - port: 80
+    service: "Start Page"
+    description: "Local services dashboard"
+
+  - port: 2222
+    service: "Gitea SSH"
+    description: "Gitea SSH for git operations"
+
+  - port: 2376
+    service: "Docker TLS"
+    description: "Docker daemon TLS port"
+
+  - port: 3000
+    service: "Gitea Web"
+    description: "Gitea web interface"
+
+  - port: 5000
+    service: "pyjobserver"
+    description: "Compliance Job Server"
+
+  - port: 5001
+    service: "Whisper App"
+    description: "Whisper transcription web application"
+
+  - port: 8000
+    service: "Portainer HTTP"
+    description: "Portainer web UI (HTTP)"
+
+  - port: 9000
+    service: "Webhook Server"
+    description: "CI/CD webhook receiver"
+
+  - port: 9443
+    service: "Portainer HTTPS"
+    description: "Portainer web UI (HTTPS)"
+
+repositories:
+  - name: "Transcriber"
+    url: "http://hypervisor:3000/mark/transcriber"
+
+  - name: "Webhook Server"
+    url: "http://hypervisor:3000/mark/webhook-server"
+
+  - name: "Start Page"
+    url: "http://hypervisor:3000/mark/start-page"

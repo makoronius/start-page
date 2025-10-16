@@ -19,3 +19,6 @@ Thumbs.db
 # Backups
 *.bak
 *.backup
+
+# CSV is now generated from config.yaml
+scripts/port-mappings.csv

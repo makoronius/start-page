@@ -8,3 +8,4 @@ Port,Service,Description
 8000,Portainer HTTP,Portainer web UI (HTTP)
 9000,Webhook Server,CI/CD webhook receiver
 9443,Portainer HTTPS,Portainer web UI (HTTPS)
+5000,pyjobserver,Compliance Job Server

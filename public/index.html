@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local Services Dashboard</title>
     <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-card: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #718096;
+            --text-header: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --shadow-hover: rgba(0, 0, 0, 0.15);
+            --border-color: #e2e8f0;
+            --input-bg: #f7fafc;
+            --button-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --button-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            --bg-card: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-header: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --shadow-hover: rgba(0, 0, 0, 0.5);
+            --border-color: #4a5568;
+            --input-bg: #1a202c;
+            --button-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --button-text: #ffffff;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,10 +41,11 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
             padding: 2rem;
-            color: #333;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -26,19 +55,90 @@
 
         header {
             text-align: center;
-            margin-bottom: 3rem;
-            color: white;
+            margin-bottom: 2rem;
+            color: var(--text-header);
+            position: relative;
         }
 
         header h1 {
             font-size: 3rem;
             margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 4px var(--shadow);
         }
 
         header p {
             font-size: 1.2rem;
             opacity: 0.9;
+        }
+
+        .theme-switcher {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .theme-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .theme-btn.active {
+            background: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-hover);
+        }
+
+        .tab-btn.active {
+            background: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .services-grid {
@@ -49,10 +149,10 @@
         }
 
         .service-card {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px var(--shadow);
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
             color: inherit;
@@ -61,13 +161,13 @@
 
         .service-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 12px var(--shadow-hover);
         }
 
         .service-icon {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--button-bg);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -80,11 +180,11 @@
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
-            color: #2d3748;
+            color: var(--text-primary);
         }
 
         .service-description {
-            color: #718096;
+            color: var(--text-secondary);
             margin-bottom: 1rem;
             line-height: 1.6;
         }
@@ -110,53 +210,117 @@
             color: #22543d;
         }
 
-        .status-info {
-            background: #bee3f8;
-            color: #2c5282;
-        }
-
-        footer {
-            text-align: center;
-            color: white;
-            margin-top: 3rem;
-            opacity: 0.8;
-        }
-
-        .info-section {
-            background: white;
+        .config-section {
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px var(--shadow);
         }
 
-        .info-section h2 {
-            margin-bottom: 1rem;
-            color: #2d3748;
+        .config-section h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
         }
 
-        .info-section code {
-            background: #f7fafc;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            color: #667eea;
-        }
-
-        .script-info {
-            background: #f7fafc;
-            padding: 1rem;
+        .service-editor {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--input-bg);
             border-radius: 8px;
-            margin-top: 1rem;
+            border: 1px solid var(--border-color);
         }
 
-        .script-info pre {
-            background: #2d3748;
-            color: #68d391;
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-hover);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-header);
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
             padding: 1rem;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin-top: 0.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        [data-theme="dark"] .error {
+            background: #742a2a;
+            color: #fed7d7;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        [data-theme="dark"] .success {
+            background: #22543d;
+            color: #c6f6d5;
         }
 
         @media (max-width: 768px) {
@@ -167,121 +331,307 @@
             .services-grid {
                 grid-template-columns: 1fr;
             }
+
+            .theme-switcher {
+                position: static;
+                justify-content: center;
+                margin-bottom: 1rem;
+            }
+
+            header {
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚀 Local Services Dashboard</h1>
-            <p>Your development environment at a glance</p>
+            <div class="theme-switcher">
+                <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
+                <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</button>
+                <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 System</button>
+            </div>
+            <h1 id="pageTitle">🚀 Local Services Dashboard</h1>
+            <p id="pageSubtitle">Your development environment at a glance</p>
         </header>
 
-        <div class="services-grid">
-            <a href="http://100.79.70.15:5001" class="service-card">
-                <div class="service-icon">🎙️</div>
-                <div class="service-title">Whisper Transcriber</div>
-                <div class="service-description">
-                    GPU-accelerated YouTube transcription with automatic subtitle generation
-                </div>
-                <div class="service-url">http://100.79.70.15:5001</div>
-                <span class="service-status status-running">Running</span>
-            </a>
-
-            <a href="http://100.79.70.15:3000" class="service-card">
-                <div class="service-icon">☕</div>
-                <div class="service-title">Gitea</div>
-                <div class="service-description">
-                    Self-hosted Git service with web interface and CI/CD integration
-                </div>
-                <div class="service-url">http://100.79.70.15:3000</div>
-                <span class="service-status status-running">Running</span>
-            </a>
-
-            <a href="https://100.79.70.15:9443" class="service-card">
-                <div class="service-icon">🐳</div>
-                <div class="service-title">Portainer</div>
-                <div class="service-description">
-                    Docker container management UI for easy deployment and monitoring
-                </div>
-                <div class="service-url">https://100.79.70.15:9443</div>
-                <span class="service-status status-running">Running</span>
-            </a>
-
-            <a href="http://100.79.70.15:9000/health" class="service-card">
-                <div class="service-icon">🔗</div>
-                <div class="service-title">Webhook Server</div>
-                <div class="service-description">
-                    CI/CD webhook receiver for automatic deployment on git push
-                </div>
-                <div class="service-url">http://100.79.70.15:9000</div>
-                <span class="service-status status-running">Running</span>
-            </a>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('services')">Services</button>
+            <button class="tab-btn" onclick="switchTab('config')">Config</button>
         </div>
 
-        <div class="info-section">
-            <h2>📡 Server Information</h2>
-            <p><strong>Host:</strong> <code>100.79.70.15</code> (Windows with WSL2)</p>
-            <p><strong>SSH Access:</strong> <code>ssh mark@100.79.70.15</code></p>
-            <p><strong>Docker:</strong> Running in WSL2</p>
+        <div id="services-tab" class="tab-content active">
+            <div id="loading" class="loading">
+                <p>Loading services...</p>
+            </div>
+            <div id="services-grid" class="services-grid"></div>
+        </div>
 
-            <div class="script-info">
-                <h3>🔧 Port Proxy Management</h3>
-                <p>To expose new services from WSL2 to Windows network:</p>
-                <pre>
-# On Windows (as Administrator)
-cd C:\Scripts
-.\Update-DockerPortProxy.ps1
+        <div id="config-tab" class="tab-content">
+            <div class="config-section">
+                <h2>⚙️ Configuration</h2>
+                <div id="config-message"></div>
 
-# Add new ports by editing:
-C:\Scripts\port-mappings.csv</pre>
+                <h3 style="margin-bottom: 1rem;">Services</h3>
+                <div id="services-editor"></div>
+
+                <button class="btn btn-primary" onclick="addService()">+ Add New Service</button>
+                <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
+                <button class="btn btn-secondary" onclick="generateCSV()">📄 Download CSV</button>
             </div>
         </div>
-
-        <div class="info-section">
-            <h2>🔄 CI/CD Pipeline</h2>
-            <p>Automatic deployment is active! When you push code to Gitea:</p>
-            <ol style="margin-left: 2rem; margin-top: 1rem; line-height: 2;">
-                <li>Push to <code>main</code> branch → Triggers webhook</li>
-                <li>Webhook verifies signature</li>
-                <li>SSH connection to deployment host</li>
-                <li>Pulls latest code from Gitea</li>
-                <li>Rebuilds Docker containers</li>
-                <li>Restarts services with new code</li>
-            </ol>
-
-            <div class="script-info">
-                <h3>📝 Example Deployment</h3>
-                <pre>
-git add .
-git commit -m "Your changes"
-git push gitea main
-
-# Deployment happens automatically!
-# Check logs: ssh mark@100.79.70.15 "docker logs webhook-server --tail 50"</pre>
-            </div>
-        </div>
-
-        <div class="info-section">
-            <h2>📚 Repositories</h2>
-            <ul style="margin-left: 2rem; margin-top: 1rem; line-height: 2;">
-                <li><strong>Transcriber:</strong> <code>http://100.79.70.15:3000/mark/transcriber</code></li>
-                <li><strong>Webhook Server:</strong> <code>http://100.79.70.15:3000/mark/webhook-server</code></li>
-                <li><strong>Start Page:</strong> <code>http://100.79.70.15:3000/mark/start-page</code></li>
-            </ul>
-        </div>
-
-        <footer>
-            <p>Powered by Docker • Gitea • WSL2</p>
-            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                Built with ❤️ by Claude Code
-            </p>
-        </footer>
     </div>
 
     <script>
-        // Auto-refresh every 5 minutes
-        setTimeout(() => location.reload(), 5 * 60 * 1000);
+        let config = null;
+
+        // Theme Management
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days = 365) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', systemTheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+
+            // Update active button
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.theme === theme) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function setTheme(theme) {
+            setCookie('theme', theme);
+            applyTheme(theme);
+        }
+
+        // Initialize theme from cookie
+        const savedTheme = getCookie('theme') || 'system';
+        applyTheme(savedTheme);
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            const currentTheme = getCookie('theme') || 'system';
+            if (currentTheme === 'system') {
+                applyTheme('system');
+            }
+        });
+
+        // Tab Management
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            if (tabName === 'config' && config) {
+                renderConfigEditor();
+            }
+        }
+
+        // Load configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                if (!response.ok) throw new Error('Failed to load configuration');
+
+                config = await response.json();
+
+                // Update title and subtitle
+                if (config.settings) {
+                    document.getElementById('pageTitle').textContent = '🚀 ' + (config.settings.title || 'Local Services Dashboard');
+                    document.getElementById('pageSubtitle').textContent = config.settings.subtitle || 'Your development environment at a glance';
+                }
+
+                renderServices();
+            } catch (error) {
+                console.error('Error loading config:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: #f56565;">Error loading services. Please refresh the page.</p>';
+            }
+        }
+
+        // Render services
+        function renderServices() {
+            const grid = document.getElementById('services-grid');
+            const loading = document.getElementById('loading');
+
+            loading.style.display = 'none';
+            grid.innerHTML = '';
+
+            if (!config.services || config.services.length === 0) {
+                grid.innerHTML = '<p>No services configured. Go to Config tab to add services.</p>';
+                return;
+            }
+
+            config.services.forEach(service => {
+                const card = document.createElement('a');
+                card.href = service.url;
+                card.className = 'service-card';
+                card.target = '_blank';
+
+                card.innerHTML = `
+                    <div class="service-icon">${service.icon || '🔧'}</div>
+                    <div class="service-title">${service.name}</div>
+                    <div class="service-description">${service.description || ''}</div>
+                    <div class="service-url">${service.url}</div>
+                    <span class="service-status status-${service.status || 'running'}">${service.status || 'Running'}</span>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Render config editor
+        function renderConfigEditor() {
+            const editor = document.getElementById('services-editor');
+            editor.innerHTML = '';
+
+            if (!config.services) {
+                config.services = [];
+            }
+
+            config.services.forEach((service, index) => {
+                const serviceDiv = document.createElement('div');
+                serviceDiv.className = 'service-editor';
+                serviceDiv.innerHTML = `
+                    <h4>Service ${index + 1}</h4>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" value="${service.name || ''}" onchange="updateService(${index}, 'name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Icon (emoji)</label>
+                        <input type="text" value="${service.icon || ''}" onchange="updateService(${index}, 'icon', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input type="text" value="${service.url || ''}" onchange="updateService(${index}, 'url', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea onchange="updateService(${index}, 'description', this.value)">${service.description || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Port (for local services)</label>
+                        <input type="number" value="${service.port || ''}" onchange="updateService(${index}, 'port', parseInt(this.value))">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" ${service.local ? 'checked' : ''} onchange="updateService(${index}, 'local', this.checked)">
+                            Local service (include in CSV)
+                        </label>
+                    </div>
+                    <button class="btn btn-danger" onclick="removeService(${index})">Delete Service</button>
+                `;
+                editor.appendChild(serviceDiv);
+            });
+        }
+
+        // Update service property
+        function updateService(index, property, value) {
+            config.services[index][property] = value;
+        }
+
+        // Add new service
+        function addService() {
+            if (!config.services) {
+                config.services = [];
+            }
+
+            config.services.push({
+                name: 'New Service',
+                icon: '🔧',
+                url: 'http://localhost:8080',
+                description: 'Service description',
+                port: 8080,
+                local: true,
+                status: 'running'
+            });
+
+            renderConfigEditor();
+        }
+
+        // Remove service
+        function removeService(index) {
+            if (confirm('Are you sure you want to delete this service?')) {
+                config.services.splice(index, 1);
+                renderConfigEditor();
+            }
+        }
+
+        // Save configuration
+        async function saveConfig() {
+            const messageDiv = document.getElementById('config-message');
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) throw new Error('Failed to save configuration');
+
+                messageDiv.innerHTML = '<div class="success">Configuration saved successfully!</div>';
+                renderServices();
+
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                }, 3000);
+            } catch (error) {
+                console.error('Error saving config:', error);
+                messageDiv.innerHTML = '<div class="error">Failed to save configuration. Please try again.</div>';
+            }
+        }
+
+        // Generate CSV
+        async function generateCSV() {
+            try {
+                const response = await fetch('/api/csv/generate');
+                if (!response.ok) throw new Error('Failed to generate CSV');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'port-mappings.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Error generating CSV:', error);
+                alert('Failed to generate CSV. Please try again.');
+            }
+        }
+
+        // Initialize
+        loadConfig();
+
+        // Auto-refresh
+        const autoRefreshMinutes = 5;
+        setTimeout(() => location.reload(), autoRefreshMinutes * 60 * 1000);
     </script>
 </body>
 </html>
