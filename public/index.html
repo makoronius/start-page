@@ -372,6 +372,125 @@
             color: var(--text-header);
         }
 
+        /* Login page styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 16px var(--shadow-hover);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .login-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        [data-theme="dark"] .login-error {
+            background: #742a2a;
+            color: #fed7d7;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--shadow);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .user-info span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 0.4rem 1rem;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #f56565;
+            color: white;
+            border-color: #f56565;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         .error {
             background: #fed7d7;
             color: #742a2a;
@@ -434,8 +553,47 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Page -->
+    <div id="login-page" class="container hidden">
         <header>
+            <div class="theme-switcher">
+                <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
+                <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</button>
+                <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 System</button>
+            </div>
+            <h1>🚀 Local Services Dashboard</h1>
+            <p>Your development environment at a glance</p>
+        </header>
+
+        <div class="login-container">
+            <div class="login-box">
+                <h2>Sign In</h2>
+                <div id="login-error" class="login-error hidden"></div>
+                <form class="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+                <div style="margin-top: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                    <p>Local access (localhost) bypasses authentication</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="main-dashboard" class="container hidden">
+        <header>
+            <div class="user-info" id="user-info">
+                <span id="username-display"></span>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
             <div class="theme-switcher">
                 <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
                 <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</button>
@@ -475,10 +633,12 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> <!-- End of config-tab -->
+    </div> <!-- End of main-dashboard -->
 
     <script>
         let config = null;
+        let currentUser = null;
 
         // Theme Management
         function getCookie(name) {
@@ -527,6 +687,104 @@
             }
         });
 
+        // Authentication functions
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                if (data.authenticated) {
+                    currentUser = data.user;
+                    showDashboard();
+                    loadConfig();
+                } else {
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('main-dashboard').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-dashboard').classList.remove('hidden');
+
+            // Update user info display
+            if (currentUser) {
+                const displayName = currentUser.is_local ?
+                    `${currentUser.username} (Local Access)` :
+                    currentUser.username;
+                document.getElementById('username-display').textContent = displayName;
+
+                // Hide user info for local access
+                if (currentUser.is_local) {
+                    document.getElementById('user-info').style.display = 'none';
+                }
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+
+            errorDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data.user;
+                    showDashboard();
+                    loadConfig();
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                currentUser = null;
+                showLogin();
+
+                // Clear form
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
         // Tab Management
         function switchTab(tabName) {
             // Update tab buttons
@@ -546,7 +804,16 @@
         // Load configuration
         async function loadConfig() {
             try {
-                const response = await fetch('/api/config');
+                const response = await fetch('/api/config', {
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    // Not authenticated, show login
+                    showLogin();
+                    return;
+                }
+
                 if (!response.ok) throw new Error('Failed to load configuration');
 
                 config = await response.json();
@@ -766,6 +1033,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify(config)
                 });
 
@@ -789,7 +1057,8 @@
 
             try {
                 const response = await fetch('/api/csv/generate', {
-                    method: 'POST'
+                    method: 'POST',
+                    credentials: 'include'
                 });
 
                 if (!response.ok) throw new Error('Failed to generate CSV');
@@ -815,8 +1084,8 @@
             }
         }
 
-        // Initialize
-        loadConfig();
+        // Initialize - check authentication first
+        checkAuthStatus();
 
         // Auto-refresh
         const autoRefreshMinutes = 5;

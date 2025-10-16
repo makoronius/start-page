@@ -22,3 +22,6 @@ Thumbs.db
 
 # CSV is now generated from config.yaml
 scripts/port-mappings.csv
+
+# Backup files
+public/index.html.backup
