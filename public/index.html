@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local Services Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚀</text></svg>">
     <style>
         :root {
             --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -652,6 +653,26 @@
             display: none !important;
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
         /* Profile modal styles */
         .modal-overlay {
             position: fixed;
@@ -695,6 +716,94 @@
 
         .modal-close:hover {
             color: var(--text-primary);
+        }
+
+        /* Dialog modal styles */
+        .dialog-modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 0.75rem;
+        }
+
+        .dialog-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .dialog-icon.warning {
+            color: #f59e0b;
+        }
+
+        .dialog-icon.error {
+            color: #ef4444;
+        }
+
+        .dialog-icon.info {
+            color: #3b82f6;
+        }
+
+        .dialog-icon.success {
+            color: #10b981;
+        }
+
+        .dialog-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .dialog-message {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .dialog-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        .dialog-btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dialog-btn-primary {
+            background: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .dialog-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .dialog-btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .dialog-btn-secondary:hover {
+            background: var(--border-color);
         }
 
         .profile-info {
@@ -923,9 +1032,105 @@
         </div>
     </div>
 
+    <!-- Dialog Modal -->
+    <div id="dialog-modal" class="modal-overlay hidden">
+        <div class="dialog-modal">
+            <div class="dialog-header">
+                <span id="dialog-icon" class="dialog-icon"></span>
+                <h3 id="dialog-title" class="dialog-title"></h3>
+            </div>
+            <div id="dialog-message" class="dialog-message"></div>
+            <div class="dialog-actions" id="dialog-actions"></div>
+        </div>
+    </div>
+
     <script>
         let config = null;
         let currentUser = null;
+
+        // Custom Dialog System
+        function showDialog(options) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('dialog-modal');
+                const icon = document.getElementById('dialog-icon');
+                const title = document.getElementById('dialog-title');
+                const message = document.getElementById('dialog-message');
+                const actions = document.getElementById('dialog-actions');
+
+                // Set icon
+                icon.className = 'dialog-icon ' + (options.type || 'info');
+                const iconMap = {
+                    'warning': '⚠️',
+                    'error': '❌',
+                    'info': 'ℹ️',
+                    'success': '✅'
+                };
+                icon.textContent = iconMap[options.type] || 'ℹ️';
+
+                // Set content
+                title.textContent = options.title || 'Notice';
+                message.textContent = options.message || '';
+
+                // Build actions
+                actions.innerHTML = '';
+
+                if (options.confirm) {
+                    // Confirm dialog
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'dialog-btn dialog-btn-secondary';
+                    cancelBtn.textContent = options.cancelText || 'Cancel';
+                    cancelBtn.onclick = () => {
+                        modal.classList.add('hidden');
+                        resolve(false);
+                    };
+
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.className = 'dialog-btn dialog-btn-primary';
+                    confirmBtn.textContent = options.confirmText || 'OK';
+                    confirmBtn.onclick = () => {
+                        modal.classList.add('hidden');
+                        resolve(true);
+                    };
+
+                    actions.appendChild(cancelBtn);
+                    actions.appendChild(confirmBtn);
+                } else {
+                    // Alert dialog
+                    const okBtn = document.createElement('button');
+                    okBtn.className = 'dialog-btn dialog-btn-primary';
+                    okBtn.textContent = 'OK';
+                    okBtn.onclick = () => {
+                        modal.classList.add('hidden');
+                        resolve(true);
+                    };
+                    actions.appendChild(okBtn);
+                }
+
+                // Show modal
+                modal.classList.remove('hidden');
+            });
+        }
+
+        // Replace alert() and confirm()
+        function customAlert(message, title = 'Notice', type = 'info') {
+            return showDialog({
+                title: title,
+                message: message,
+                type: type,
+                confirm: false
+            });
+        }
+
+        function customConfirm(message, title = 'Confirm', type = 'warning') {
+            return showDialog({
+                title: title,
+                message: message,
+                type: type,
+                confirm: true,
+                confirmText: 'Confirm',
+                cancelText: 'Cancel'
+            });
+        }
 
         // Theme Management
         function getCookie(name) {
@@ -1635,16 +1840,26 @@
             renderCategoriesEditor();
         }
 
-        function removeCategory(index) {
+        async function removeCategory(index) {
             const category = config.categories[index];
             const hasServices = config.services && config.services.some(s => s.category === category.name);
 
             if (hasServices) {
-                alert(`Cannot delete category "${category.name}" because it contains services. Please move or delete the services first.`);
+                await customAlert(
+                    `Cannot delete category "${category.name}" because it contains services. Please move or delete the services first.`,
+                    'Cannot Delete Category',
+                    'error'
+                );
                 return;
             }
 
-            if (confirm(`Are you sure you want to delete category "${category.name}"?`)) {
+            const confirmed = await customConfirm(
+                `Are you sure you want to delete category "${category.name}"?`,
+                'Delete Category',
+                'warning'
+            );
+
+            if (confirmed) {
                 config.categories.splice(index, 1);
                 renderCategoriesEditor();
             }
@@ -1787,8 +2002,14 @@
         }
 
         // Remove service
-        function removeService(index) {
-            if (confirm('Are you sure you want to delete this service?')) {
+        async function removeService(index) {
+            const confirmed = await customConfirm(
+                'Are you sure you want to delete this service?',
+                'Delete Service',
+                'warning'
+            );
+
+            if (confirmed) {
                 config.services.splice(index, 1);
                 renderServicesByCategory_Config();
             }
