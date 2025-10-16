@@ -1069,7 +1069,6 @@
                 <!-- Services Sub-tab -->
                 <div id="services-subtab" class="sub-tab-content">
                     <div id="services-by-category"></div>
-                    <button class="btn btn-primary" onclick="addService()" style="margin-top: 1rem;">+ Add New Service</button>
 
                     <div style="margin-top: 2rem;">
                         <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
@@ -2513,12 +2512,21 @@
                             }).join('')}
                         </div>
                     </div>
-                    <div style="margin-top: 1rem;">
-                        <button class="btn btn-primary" onclick="saveRoleChanges()">💾 Save Changes</button>
-                    </div>
                 `;
                 container.appendChild(card);
             });
+
+            // Add single Save Changes button after all roles
+            const saveButtonDiv = document.createElement('div');
+            saveButtonDiv.style.marginTop = '1.5rem';
+            saveButtonDiv.style.textAlign = 'center';
+            saveButtonDiv.innerHTML = `
+                <button class="btn btn-primary" onclick="saveRoleChanges()" style="padding: 0.75rem 2rem; font-size: 1rem;">
+                    💾 Save All Changes
+                </button>
+                <div id="role-save-message" style="margin-top: 1rem;"></div>
+            `;
+            container.appendChild(saveButtonDiv);
         }
 
         function updateRoleCategory(roleName, categoryName, isChecked) {
@@ -2548,6 +2556,9 @@
         }
 
         async function saveRoleChanges() {
+            const messageDiv = document.getElementById('role-save-message');
+            messageDiv.innerHTML = '';
+
             try {
                 // Save to users.yaml through backend
                 const response = await fetch('/api/roles', {
@@ -2564,11 +2575,14 @@
                     throw new Error(errorData.error || 'Failed to save roles');
                 }
 
-                await customAlert('Role changes saved successfully!', 'Success', 'success');
+                messageDiv.innerHTML = '<div class="success">✅ All role changes saved successfully!</div>';
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                }, 5000);
                 loadRoles();
             } catch (error) {
                 console.error('Error saving roles:', error);
-                await customAlert('Failed to save role changes: ' + error.message, 'Error', 'error');
+                messageDiv.innerHTML = `<div class="error">❌ Failed to save changes: ${error.message}</div>`;
             }
         }
 
