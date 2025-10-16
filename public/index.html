@@ -2085,19 +2085,25 @@
                 messageDiv.innerHTML = '<div class="success">✓ Configuration saved successfully!</div>';
 
                 // Re-render config editors with current config
-                renderSettingsEditor();
-                renderCategoriesEditor();
-                renderServicesByCategory_Config();
+                try {
+                    renderSettingsEditor();
+                    renderCategoriesEditor();
+                    renderServicesByCategory_Config();
 
-                // Also update the main view's category tabs without switching tabs
-                renderCategoryTabs();
+                    // Update category tabs in main view
+                    if (config.categories) {
+                        renderCategoryTabs();
+                    }
+                } catch (renderError) {
+                    console.error('Error re-rendering:', renderError);
+                }
 
                 setTimeout(() => {
                     messageDiv.innerHTML = '';
                 }, 3000);
             } catch (error) {
                 console.error('Error saving config:', error);
-                messageDiv.innerHTML = '<div class="error">Failed to save configuration. Please try again.</div>';
+                messageDiv.innerHTML = `<div class="error">❌ Failed to save configuration: ${error.message}</div>`;
             }
         }
 
