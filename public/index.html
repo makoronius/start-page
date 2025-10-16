@@ -1030,7 +1030,7 @@
 
         <div class="tabs">
             <div id="category-tabs" class="category-tabs"></div>
-            <button class="tab-btn" onclick="switchTab('config')">Config</button>
+            <button id="config-tab-btn" class="tab-btn" onclick="switchTab('config')" style="display: none;">Config</button>
         </div>
 
         <div id="services-tab" class="tab-content active">
@@ -1354,6 +1354,15 @@
 
                 if (data.authenticated) {
                     currentUser = data.user;
+
+                    // Show/hide Config tab based on admin status
+                    const configBtn = document.getElementById('config-tab-btn');
+                    if (currentUser.is_admin) {
+                        configBtn.style.display = 'inline-block';
+                    } else {
+                        configBtn.style.display = 'none';
+                    }
+
                     showDashboard();
                     loadConfig();
                 } else {

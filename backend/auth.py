@@ -55,18 +55,29 @@ def get_current_user():
         return {
             'username': 'localhost',
             'roles': ['Admins'],
-            'is_local': True
+            'is_local': True,
+            'is_admin': True
         }
 
     if 'username' in session:
         users_data = load_users()
         for user in users_data.get('users', []):
             if user['username'] == session['username']:
+                # Check if user has admin privileges
+                user_roles = user.get('roles', [])
+                is_admin = False
+                for role in users_data.get('roles', []):
+                    if role['name'] in user_roles:
+                        if role.get('is_admin', False) or role['name'] == 'Admins':
+                            is_admin = True
+                            break
+
                 return {
                     'username': user['username'],
-                    'roles': user.get('roles', []),
+                    'roles': user_roles,
                     'email': user.get('email', ''),
-                    'is_local': False
+                    'is_local': False,
+                    'is_admin': is_admin
                 }
     return None
 

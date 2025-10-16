@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    env_file:
+      - .env
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./users.yaml:/app/users.yaml
