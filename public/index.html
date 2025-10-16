@@ -697,7 +697,7 @@
             color: #fed7d7;
         }
 
-        .user-info {
+        .header-user-info {
             position: absolute;
             top: 0;
             left: 0;
@@ -710,7 +710,7 @@
             align-items: center;
         }
 
-        .user-info span {
+        .header-user-info span {
             color: var(--text-primary);
             font-weight: 500;
         }
@@ -1015,7 +1015,7 @@
     <!-- Main Dashboard -->
     <div id="main-dashboard" class="container hidden">
         <header>
-            <div class="user-info" id="user-info">
+            <div class="header-user-info" id="user-info">
                 <a href="#" class="username-link" id="username-display" onclick="showProfile(event)"></a>
                 <button class="logout-btn" onclick="handleLogout()">Logout</button>
             </div>
@@ -2018,6 +2018,14 @@
                     grid.appendChild(serviceDiv);
                 });
 
+                // Add "Add Service" button for this category
+                const addButton = document.createElement('button');
+                addButton.className = 'btn btn-primary';
+                addButton.style.marginTop = '1rem';
+                addButton.textContent = `+ Add Service to ${category.name}`;
+                addButton.onclick = () => addServiceToCategory(category.name);
+                categorySection.appendChild(addButton);
+
                 container.appendChild(categorySection);
             });
         }
@@ -2199,6 +2207,26 @@
                 local: true,
                 status: 'running',
                 category: defaultCategory
+            });
+
+            renderServicesByCategory_Config();
+        }
+
+        // Add new service to specific category
+        function addServiceToCategory(categoryName) {
+            if (!config.services) {
+                config.services = [];
+            }
+
+            config.services.push({
+                name: 'New Service',
+                icon: '🔧',
+                url: 'http://localhost:8080',
+                description: 'Service description',
+                port: 8080,
+                local: true,
+                status: 'running',
+                category: categoryName
             });
 
             renderServicesByCategory_Config();
@@ -2756,6 +2784,12 @@
         }
 
         async function deleteRole(roleName) {
+            // Prevent deletion of Admins role
+            if (roleName === 'Admins') {
+                await customAlert('Cannot delete the Admins role. This role is required for system administration.', 'Error', 'error');
+                return;
+            }
+
             const confirmed = await customConfirm(
                 `Are you sure you want to delete the role "${roleName}"?`,
                 'Delete Role',
