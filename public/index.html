@@ -1229,7 +1229,8 @@
                             // Render config if needed
                             if (state.currentTab === 'config' && config) {
                                 renderSettingsEditor();
-                                renderConfigEditor();
+                                renderCategoriesEditor();
+                                renderServicesByCategory_Config();
                             }
                         }
                     });
@@ -1858,7 +1859,14 @@
                 if (!response.ok) throw new Error('Failed to save configuration');
 
                 messageDiv.innerHTML = '<div class="success">Configuration saved successfully!</div>';
-                renderServices();
+
+                // Reload config to get fresh data
+                await loadConfig();
+
+                // Re-render config editors
+                renderSettingsEditor();
+                renderCategoriesEditor();
+                renderServicesByCategory_Config();
 
                 setTimeout(() => {
                     messageDiv.innerHTML = '';
