@@ -27,22 +27,26 @@ def save_users(data):
         return False
 
 def is_local_request():
-    """Check if request is from localhost"""
-    remote_addr = request.remote_addr
-    forwarded_for = request.headers.get('X-Forwarded-For', '')
-    real_ip = request.headers.get('X-Real-IP', '')
-
-    # Check if request is from localhost
+    """Check if request is from localhost - checks real IP first when behind proxy"""
     local_ips = ['127.0.0.1', 'localhost', '::1']
 
-    if remote_addr in local_ips:
-        return True
-    if forwarded_for and forwarded_for.split(',')[0].strip() in local_ips:
-        return True
-    if real_ip in local_ips:
-        return True
+    # When behind nginx proxy, check X-Real-IP and X-Forwarded-For headers FIRST
+    # These contain the actual client IP, not the proxy IP
+    real_ip = request.headers.get('X-Real-IP', '').strip()
+    forwarded_for = request.headers.get('X-Forwarded-For', '').strip()
 
-    return False
+    # Check X-Real-IP first (set by nginx)
+    if real_ip:
+        return real_ip in local_ips
+
+    # Check X-Forwarded-For (first IP in the chain)
+    if forwarded_for:
+        client_ip = forwarded_for.split(',')[0].strip()
+        return client_ip in local_ips
+
+    # Only check remote_addr if no proxy headers (direct connection)
+    remote_addr = request.remote_addr
+    return remote_addr in local_ips
 
 def get_current_user():
     """Get current logged-in user"""
