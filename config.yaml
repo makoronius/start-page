@@ -8,15 +8,20 @@ settings:
   backup_path: /mnt/c/Scripts/backups
   powershell_script_path: /mnt/c/Scripts/Update-DockerPortProxy.ps1
 
-services:
-  - name: "Whisper Transcriber"
-    icon: "🎙️"
-    url: "http://hypervisor:5001"
-    description: "GPU-accelerated YouTube transcription with automatic subtitle generation"
-    port: 5001
-    local: true
-    status: running
+categories:
+  - name: "Professional"
+    description: "Work-related services"
 
+  - name: "External"
+    description: "External cloud services"
+
+  - name: "Family"
+    description: "Family and entertainment services"
+
+  - name: "System"
+    description: "System administration and infrastructure"
+
+services:
   - name: "PyJob Server"
     icon: "⚙️"
     url: "http://hypervisor:5000"
@@ -24,6 +29,56 @@ services:
     port: 5000
     local: true
     status: running
+    category: "Professional"
+
+  - name: "Confluence"
+    icon: "📚"
+    url: "https://emelianov.atlassian.net/wiki/"
+    description: "Team collaboration and documentation"
+    local: false
+    status: running
+    category: "External"
+
+  - name: "Jira"
+    icon: "📋"
+    url: "https://emelianov.atlassian.net/jira/"
+    description: "Project management and issue tracking"
+    local: false
+    status: running
+    category: "External"
+
+  - name: "ChatGPT"
+    icon: "🤖"
+    url: "https://chat.openai.com/"
+    description: "AI-powered chat assistant"
+    local: false
+    status: running
+    category: "External"
+
+  - name: "Whisper Transcriber"
+    icon: "🎙️"
+    url: "http://hypervisor:5001"
+    description: "GPU-accelerated YouTube transcription with automatic subtitle generation"
+    port: 5001
+    local: true
+    status: running
+    category: "Family"
+
+  - name: "YouTube"
+    icon: "📺"
+    url: "https://www.youtube.com/"
+    description: "Video streaming platform"
+    local: false
+    status: running
+    category: "Family"
+
+  - name: "YouTube Music"
+    icon: "🎵"
+    url: "https://music.youtube.com/"
+    description: "Music streaming service"
+    local: false
+    status: running
+    category: "Family"
 
   - name: "Gitea"
     icon: "☕"
@@ -32,6 +87,7 @@ services:
     port: 3000
     local: true
     status: running
+    category: "System"
 
   - name: "Portainer"
     icon: "🐳"
@@ -40,6 +96,7 @@ services:
     port: 9443
     local: true
     status: running
+    category: "System"
 
   - name: "Webhook Server"
     icon: "🔗"
@@ -48,6 +105,7 @@ services:
     port: 9000
     local: true
     status: running
+    category: "System"
 
 port_mappings:
   - port: 22

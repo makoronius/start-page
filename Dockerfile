@@ -13,7 +13,9 @@ COPY backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/app.py /app/
+COPY backend/auth.py /app/
 COPY config.yaml /app/
+COPY users.yaml /app/
 
 # Setup nginx
 COPY public/ /usr/share/nginx/html/

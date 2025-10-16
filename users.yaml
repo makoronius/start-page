@@ -1,0 +1,42 @@
+users:
+  - username: "admin"
+    password: "admin123"  # Change this password!
+    email: ""
+    roles:
+      - "Admins"
+
+  - username: "mark"
+    password: "changeme"  # Set your password
+    email: "mark.emelianov@gmail.com"
+    roles:
+      - "Admins"
+
+  - username: "gleb"
+    password: "changeme"  # Set password
+    email: ""
+    roles:
+      - "Family"
+
+  - username: "mary"
+    password: "changeme"  # Set password
+    email: ""
+    roles:
+      - "Family"
+
+roles:
+  - name: "Admins"
+    description: "Full system access"
+    categories:
+      - "Professional"
+      - "System"
+
+  - name: "Family"
+    description: "Family member access"
+    categories:
+      - "External"
+      - "Family"
+
+  - name: "Guests"
+    description: "Limited guest access"
+    categories:
+      - "Family"
