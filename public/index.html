@@ -110,6 +110,13 @@
             gap: 1rem;
             margin-bottom: 2rem;
             justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
@@ -604,7 +611,7 @@
         </header>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('services')">Services</button>
+            <div id="category-tabs" class="category-tabs"></div>
             <button class="tab-btn" onclick="switchTab('config')">Config</button>
         </div>
 
@@ -789,6 +796,7 @@
         function saveState() {
             const state = {
                 currentTab: getCurrentTab(),
+                currentCategory: window.currentCategory || null,
                 timestamp: Date.now()
             };
             localStorage.setItem('dashboardState', JSON.stringify(state));
@@ -817,26 +825,33 @@
 
         function restoreTab() {
             const state = loadState();
-            if (state && state.currentTab) {
-                // Find the tab button and click it programmatically
-                const tabButtons = document.querySelectorAll('.tab-btn');
-                tabButtons.forEach((btn, index) => {
-                    if (btn.textContent.toLowerCase().includes(state.currentTab.toLowerCase())) {
-                        // Remove active from all
-                        tabButtons.forEach(b => b.classList.remove('active'));
-                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            if (state) {
+                // Restore category if in services view
+                if (state.currentCategory && state.currentTab === 'services') {
+                    switchCategory(state.currentCategory);
+                }
 
-                        // Add active to target
-                        btn.classList.add('active');
-                        document.getElementById(`${state.currentTab}-tab`).classList.add('active');
+                // Restore main tab
+                if (state.currentTab && state.currentTab !== 'services') {
+                    const tabButtons = document.querySelectorAll('.tab-btn');
+                    tabButtons.forEach((btn) => {
+                        if (btn.textContent.toLowerCase().includes(state.currentTab.toLowerCase())) {
+                            // Remove active from all
+                            tabButtons.forEach(b => b.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-                        // Render config if needed
-                        if (state.currentTab === 'config' && config) {
-                            renderSettingsEditor();
-                            renderConfigEditor();
+                            // Add active to target
+                            btn.classList.add('active');
+                            document.getElementById(`${state.currentTab}-tab`).classList.add('active');
+
+                            // Render config if needed
+                            if (state.currentTab === 'config' && config) {
+                                renderSettingsEditor();
+                                renderConfigEditor();
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         }
 
@@ -882,7 +897,8 @@
                     document.getElementById('pageSubtitle').textContent = config.settings.subtitle || 'Your development environment at a glance';
                 }
 
-                renderServices();
+                // Render category tabs and services
+                renderCategoryTabs();
 
                 // Restore tab state after config is loaded
                 setTimeout(() => restoreTab(), 100);
@@ -902,8 +918,55 @@
             }
         }
 
-        // Render services
-        function renderServices() {
+        // Render category tabs
+        function renderCategoryTabs() {
+            const container = document.getElementById('category-tabs');
+            container.innerHTML = '';
+
+            if (!config.categories || config.categories.length === 0) {
+                return;
+            }
+
+            config.categories.forEach((category, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'tab-btn';
+                btn.textContent = category.name;
+                btn.onclick = () => switchCategory(category.name);
+
+                if (index === 0 && !window.currentCategory) {
+                    btn.classList.add('active');
+                    window.currentCategory = category.name;
+                }
+
+                container.appendChild(btn);
+            });
+
+            // Render services for the first/current category
+            renderServicesByCategory(window.currentCategory || config.categories[0].name);
+        }
+
+        // Switch category
+        function switchCategory(categoryName) {
+            // Update active category tab
+            document.querySelectorAll('#category-tabs .tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === categoryName) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Make sure services tab is active
+            document.querySelectorAll('.tabs > .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('services-tab').classList.add('active');
+
+            window.currentCategory = categoryName;
+            renderServicesByCategory(categoryName);
+            saveState();
+        }
+
+        // Render services by category
+        function renderServicesByCategory(categoryName) {
             const grid = document.getElementById('services-grid');
             const loading = document.getElementById('loading');
 
@@ -915,7 +978,15 @@
                 return;
             }
 
-            config.services.forEach(service => {
+            // Filter services by category
+            const categoryServices = config.services.filter(s => s.category === categoryName);
+
+            if (categoryServices.length === 0) {
+                grid.innerHTML = `<p>No services in ${categoryName} category.</p>`;
+                return;
+            }
+
+            categoryServices.forEach(service => {
                 const card = document.createElement('a');
                 card.href = service.url;
                 card.className = 'service-card';
