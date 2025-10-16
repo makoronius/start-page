@@ -452,6 +452,89 @@
             font-style: italic;
         }
 
+        .user-card {
+            padding: 1rem;
+            background: var(--input-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .user-email {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .user-roles {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .role-editor-card {
+            padding: 1.5rem;
+            background: var(--input-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .role-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .role-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .role-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .role-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
         .form-group {
             margin-bottom: 0.75rem;
         }
@@ -966,6 +1049,7 @@
                 <div class="sub-tabs">
                     <button class="sub-tab-btn active" onclick="switchConfigTab('general')">General Settings</button>
                     <button class="sub-tab-btn" onclick="switchConfigTab('services')">Services</button>
+                    <button class="sub-tab-btn" onclick="switchConfigTab('users')">Users & Access</button>
                 </div>
 
                 <!-- General Settings Sub-tab -->
@@ -990,6 +1074,16 @@
                     <div style="margin-top: 2rem;">
                         <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
                     </div>
+                </div>
+
+                <!-- Users & Access Sub-tab -->
+                <div id="users-subtab" class="sub-tab-content">
+                    <h3 style="margin-bottom: 1rem;">Users</h3>
+                    <div id="users-list"></div>
+                    <button class="btn btn-primary" onclick="showAddUserModal()" style="margin-top: 1rem;">+ Add New User</button>
+
+                    <h3 style="margin-bottom: 1rem; margin-top: 2rem;">Roles & Access Rights</h3>
+                    <div id="roles-editor"></div>
                 </div>
             </div>
         </div>
@@ -1041,6 +1135,40 @@
             </div>
             <div id="dialog-message" class="dialog-message"></div>
             <div class="dialog-actions" id="dialog-actions"></div>
+        </div>
+    </div>
+
+    <!-- User Edit Modal -->
+    <div id="user-modal" class="modal-overlay hidden" onclick="closeUserModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            <h2 id="user-modal-title">Add User</h2>
+            <div id="user-modal-message"></div>
+
+            <div class="form-group">
+                <label for="user-username">Username *</label>
+                <input type="text" id="user-username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="user-email">Email</label>
+                <input type="email" id="user-email">
+            </div>
+
+            <div class="form-group">
+                <label for="user-password">Password *</label>
+                <input type="password" id="user-password" required>
+            </div>
+
+            <div class="form-group">
+                <label>Roles *</label>
+                <div id="user-roles-checkboxes"></div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="saveUser()">Save User</button>
+                <button class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -1472,6 +1600,12 @@
             // Update sub-tab content
             document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(`${subTabName}-subtab`).classList.add('active');
+
+            // Load users if switching to users tab
+            if (subTabName === 'users') {
+                loadUsers();
+                loadRoles();
+            }
         }
 
         // Load configuration
@@ -2138,6 +2272,281 @@
                 console.error('Error generating CSV:', error);
                 messageDiv.innerHTML = `<div class="error">Failed to generate CSV: ${error.message}</div>`;
             }
+        }
+
+        // User Management
+        let currentEditingUser = null;
+        let usersData = null;
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load users');
+
+                const users = await response.json();
+                renderUsersList(users);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('users-list').innerHTML = '<p class="error">Failed to load users</p>';
+            }
+        }
+
+        function renderUsersList(users) {
+            const container = document.getElementById('users-list');
+            container.innerHTML = '';
+
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p>No users found. Add a user to get started.</p>';
+                return;
+            }
+
+            users.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-name">${user.username}</div>
+                        ${user.email ? `<div class="user-email">${user.email}</div>` : ''}
+                        <div class="user-roles">
+                            ${user.roles.map(role => `<span class="role-badge">${role}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-secondary" onclick="editUser('${user.username}')">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteUser('${user.username}')">🗑️ Delete</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function loadRoles() {
+            try {
+                const response = await fetch('/api/roles', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load roles');
+
+                const roles = await response.json();
+                usersData = { roles };
+                renderRolesEditor(roles);
+            } catch (error) {
+                console.error('Error loading roles:', error);
+                document.getElementById('roles-editor').innerHTML = '<p class="error">Failed to load roles</p>';
+            }
+        }
+
+        function renderRolesEditor(roles) {
+            const container = document.getElementById('roles-editor');
+            container.innerHTML = '';
+
+            if (!roles || roles.length === 0) {
+                container.innerHTML = '<p>No roles defined.</p>';
+                return;
+            }
+
+            roles.forEach(role => {
+                const card = document.createElement('div');
+                card.className = 'role-editor-card';
+                card.innerHTML = `
+                    <div class="role-header">
+                        <div>
+                            <div class="role-name">${role.name}</div>
+                            <div class="role-description">${role.description || ''}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Access to categories:</strong>
+                        <div class="role-categories">
+                            ${role.categories && role.categories.length > 0
+                                ? role.categories.map(cat => `<span class="role-badge">${cat}</span>`).join('')
+                                : '<span style="color: var(--text-secondary);">No categories assigned</span>'}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function showAddUserModal() {
+            currentEditingUser = null;
+            document.getElementById('user-modal-title').textContent = 'Add New User';
+            document.getElementById('user-username').value = '';
+            document.getElementById('user-username').disabled = false;
+            document.getElementById('user-email').value = '';
+            document.getElementById('user-password').value = '';
+            document.getElementById('user-modal-message').innerHTML = '';
+
+            // Load roles checkboxes
+            renderRolesCheckboxes([]);
+
+            document.getElementById('user-modal').classList.remove('hidden');
+        }
+
+        async function editUser(username) {
+            try {
+                const response = await fetch('/api/users', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load user');
+
+                const users = await response.json();
+                const user = users.find(u => u.username === username);
+
+                if (!user) throw new Error('User not found');
+
+                currentEditingUser = username;
+                document.getElementById('user-modal-title').textContent = 'Edit User';
+                document.getElementById('user-username').value = user.username;
+                document.getElementById('user-username').disabled = true;
+                document.getElementById('user-email').value = user.email || '';
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-password').placeholder = 'Leave empty to keep current password';
+                document.getElementById('user-modal-message').innerHTML = '';
+
+                // Load roles checkboxes with current user roles
+                renderRolesCheckboxes(user.roles);
+
+                document.getElementById('user-modal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading user:', error);
+                await customAlert('Failed to load user details', 'Error', 'error');
+            }
+        }
+
+        function renderRolesCheckboxes(selectedRoles) {
+            const container = document.getElementById('user-roles-checkboxes');
+            container.innerHTML = '';
+
+            if (!usersData || !usersData.roles) {
+                container.innerHTML = '<p>Loading roles...</p>';
+                return;
+            }
+
+            usersData.roles.forEach(role => {
+                const label = document.createElement('label');
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '0.5rem';
+                label.style.marginBottom = '0.5rem';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = role.name;
+                checkbox.checked = selectedRoles.includes(role.name);
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(`${role.name} - ${role.description || ''}`));
+                container.appendChild(label);
+            });
+        }
+
+        async function saveUser() {
+            const username = document.getElementById('user-username').value.trim();
+            const email = document.getElementById('user-email').value.trim();
+            const password = document.getElementById('user-password').value;
+            const messageDiv = document.getElementById('user-modal-message');
+
+            // Get selected roles
+            const checkboxes = document.querySelectorAll('#user-roles-checkboxes input[type="checkbox"]:checked');
+            const roles = Array.from(checkboxes).map(cb => cb.value);
+
+            // Validation
+            if (!username) {
+                messageDiv.innerHTML = '<div class="error">Username is required</div>';
+                return;
+            }
+
+            if (!currentEditingUser && !password) {
+                messageDiv.innerHTML = '<div class="error">Password is required for new users</div>';
+                return;
+            }
+
+            if (roles.length === 0) {
+                messageDiv.innerHTML = '<div class="error">Please select at least one role</div>';
+                return;
+            }
+
+            try {
+                const userData = {
+                    username,
+                    email,
+                    roles
+                };
+
+                if (password) {
+                    userData.password = password;
+                }
+
+                const url = currentEditingUser ? `/api/users/${currentEditingUser}` : '/api/users';
+                const method = currentEditingUser ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save user');
+                }
+
+                await customAlert(
+                    `User ${currentEditingUser ? 'updated' : 'created'} successfully`,
+                    'Success',
+                    'success'
+                );
+
+                closeUserModal();
+                loadUsers();
+            } catch (error) {
+                console.error('Error saving user:', error);
+                messageDiv.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        }
+
+        async function deleteUser(username) {
+            const confirmed = await customConfirm(
+                `Are you sure you want to delete user "${username}"?`,
+                'Delete User',
+                'warning'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/users/${username}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete user');
+                }
+
+                await customAlert('User deleted successfully', 'Success', 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                await customAlert(`Failed to delete user: ${error.message}`, 'Error', 'error');
+            }
+        }
+
+        function closeUserModal(event) {
+            if (event && event.target.id !== 'user-modal') return;
+            document.getElementById('user-modal').classList.add('hidden');
+            document.getElementById('user-password').placeholder = '';
+            currentEditingUser = null;
         }
 
         // Initialize - check authentication first
