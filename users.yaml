@@ -29,6 +29,8 @@ roles:
     categories:
       - "Professional"
       - "System"
+      - "External"
+      - "Family"
 
   - name: "Family"
     description: "Family member access"

@@ -157,6 +157,22 @@
             margin-bottom: 2rem;
         }
 
+        .services-grid[data-columns="1"] {
+            grid-template-columns: 1fr;
+        }
+
+        .services-grid[data-columns="2"] {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .services-grid[data-columns="3"] {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .services-grid[data-columns="4"] {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
         .service-card {
             background: var(--bg-card);
             border-radius: 10px;
@@ -264,6 +280,43 @@
             background: var(--input-bg);
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            cursor: move;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+        }
+
+        .service-editor:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .service-editor.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .service-editor.drag-over {
+            border-color: #667eea;
+            border-style: dashed;
+            background: var(--input-bg);
+        }
+
+        .service-editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .drag-handle {
+            font-size: 1.5rem;
+            cursor: grab;
+            user-select: none;
+            margin-right: 0.5rem;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
         }
 
         .service-editor h4 {
@@ -1183,6 +1236,14 @@
             loading.style.display = 'none';
             grid.innerHTML = '';
 
+            // Apply grid columns setting
+            const gridColumns = config.settings?.grid_columns || 'auto';
+            if (gridColumns === 'auto') {
+                grid.removeAttribute('data-columns');
+            } else {
+                grid.setAttribute('data-columns', gridColumns);
+            }
+
             if (!config.services || config.services.length === 0) {
                 grid.innerHTML = '<p>No services configured. Go to Config tab to add services.</p>';
                 return;
@@ -1270,6 +1331,16 @@
                             <label>PowerShell Script Path</label>
                             <input type="text" value="${settings.powershell_script_path || '/scripts/Update-DockerPortProxy.ps1'}" onchange="updateSetting('powershell_script_path', this.value)">
                         </div>
+                        <div class="form-group">
+                            <label>Grid Columns</label>
+                            <select onchange="updateSetting('grid_columns', this.value)" value="${settings.grid_columns || 'auto'}">
+                                <option value="auto" ${!settings.grid_columns || settings.grid_columns === 'auto' ? 'selected' : ''}>Auto (responsive)</option>
+                                <option value="1" ${settings.grid_columns === '1' ? 'selected' : ''}>1 column</option>
+                                <option value="2" ${settings.grid_columns === '2' ? 'selected' : ''}>2 columns</option>
+                                <option value="3" ${settings.grid_columns === '3' ? 'selected' : ''}>3 columns</option>
+                                <option value="4" ${settings.grid_columns === '4' ? 'selected' : ''}>4 columns</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1295,8 +1366,23 @@
             config.services.forEach((service, index) => {
                 const serviceDiv = document.createElement('div');
                 serviceDiv.className = 'service-editor';
+                serviceDiv.draggable = true;
+                serviceDiv.dataset.index = index;
+
+                // Add drag event listeners
+                serviceDiv.addEventListener('dragstart', handleDragStart);
+                serviceDiv.addEventListener('dragend', handleDragEnd);
+                serviceDiv.addEventListener('dragover', handleDragOver);
+                serviceDiv.addEventListener('drop', handleDrop);
+                serviceDiv.addEventListener('dragleave', handleDragLeave);
+
                 serviceDiv.innerHTML = `
-                    <h4>Service ${index + 1}</h4>
+                    <div class="service-editor-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                            <h4 style="margin: 0;">Service ${index + 1}</h4>
+                        </div>
+                    </div>
                     <div class="service-editor-fields">
                         <div class="form-group">
                             <label>Name</label>
@@ -1363,6 +1449,54 @@
                 config.services.splice(index, 1);
                 renderConfigEditor();
             }
+        }
+
+        // Drag and Drop handlers
+        let draggedIndex = null;
+
+        function handleDragStart(e) {
+            draggedIndex = parseInt(e.currentTarget.dataset.index);
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.service-editor').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const dropIndex = parseInt(e.currentTarget.dataset.index);
+
+            if (draggedIndex !== null && draggedIndex !== dropIndex) {
+                // Reorder the services array
+                const draggedService = config.services[draggedIndex];
+                config.services.splice(draggedIndex, 1);
+                config.services.splice(dropIndex, 0, draggedService);
+
+                // Re-render the config editor
+                renderConfigEditor();
+            }
+
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
         }
 
         // Save configuration
