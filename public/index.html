@@ -81,7 +81,7 @@
             position: absolute;
             top: 0.5rem;
             right: 0;
-            display: flex;
+            display: none; /* Hidden - theme buttons moved to Customization tab */
             gap: 0.3rem;
             z-index: 10;
         }
@@ -1786,6 +1786,35 @@
             </div>
 
             <div class="form-group">
+                <label for="ambient-volume">Ambient Sound Volume</label>
+                <input type="range" id="ambient-volume" min="0" max="100" value="15" oninput="changeAmbientVolume(this.value)" style="width: 100%;">
+                <span id="ambient-volume-display" style="color: var(--text-secondary); font-size: 0.9rem;">15%</span>
+            </div>
+
+            <div class="form-group">
+                <label for="particle-mode">Particle Animation Mode</label>
+                <select id="particle-mode" onchange="changeParticleMode(this.value)">
+                    <option value="auto">Automatic (Time & Season)</option>
+                    <option value="morning">Morning</option>
+                    <option value="afternoon">Afternoon</option>
+                    <option value="evening">Evening</option>
+                    <option value="night">Night</option>
+                    <option value="snow">Snow (Winter)</option>
+                    <option value="spring">Spring</option>
+                    <option value="autumn">Autumn</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Theme Mode</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="theme-btn" data-theme="light" onclick="setTheme('light')" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; background: var(--input-bg); cursor: pointer;">☀️ Light</button>
+                    <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; background: var(--input-bg); cursor: pointer;">🌙 Dark</button>
+                    <button class="theme-btn" data-theme="system" onclick="setTheme('system')" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; background: var(--input-bg); cursor: pointer;">💻 System</button>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label>
                     <input type="checkbox" id="particles-enabled" onchange="toggleParticles()" checked />
                     Enable Background Particles
@@ -1799,14 +1828,6 @@
                 </label>
             </div>
 
-            <div class="form-group">
-                <label>Theme</label>
-                <div class="theme-switcher" style="margin-top: 0.5rem;">
-                    <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
-                    <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</button>
-                    <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 System</button>
-                </div>
-            </div>
 
             <div class="form-group">
                 <label>
@@ -4055,6 +4076,8 @@
         let ambientSound = null;
         let ambientOscillators = [];
         let ambientNoiseNode = null;
+        let ambientMasterGain = null;
+        let ambientVolume = parseFloat(localStorage.getItem('ambientVolume') || '15') / 100;
 
         function stopAmbientSound() {
             ambientOscillators.forEach(osc => {
@@ -4099,9 +4122,9 @@
             if (!audioContext) return;
 
             try {
-                const masterGain = audioContext.createGain();
-                masterGain.gain.value = 0.15; // Overall ambient volume
-                masterGain.connect(audioContext.destination);
+                ambientMasterGain = audioContext.createGain();
+                ambientMasterGain.gain.value = ambientVolume;
+                ambientMasterGain.connect(audioContext.destination);
 
                 if (type === 'rain') {
                     // Rain: filtered white noise
@@ -4112,7 +4135,7 @@
                     filter.Q.value = 0.5;
 
                     noise.connect(filter);
-                    filter.connect(masterGain);
+                    filter.connect(ambientMasterGain);
                     noise.start(0);
                     ambientOscillators.push(noise);
                     ambientNoiseNode = noise;
@@ -4133,7 +4156,7 @@
                     lfoGain.connect(filter.frequency);
 
                     noise.connect(filter);
-                    filter.connect(masterGain);
+                    filter.connect(ambientMasterGain);
 
                     noise.start(0);
                     lfo.start(0);
@@ -4141,21 +4164,28 @@
                     ambientNoiseNode = noise;
 
                 } else if (type === 'forest') {
-                    // Forest: gentle high-frequency chirps
+                    // Forest: chirping birds with varying frequencies
                     const noise = createWhiteNoise();
                     const filter = audioContext.createBiquadFilter();
-                    filter.type = 'highpass';
-                    filter.frequency.value = 2000;
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 3000;
+                    filter.Q.value = 2;
 
-                    const gainEnv = audioContext.createGain();
-                    gainEnv.gain.value = 0.05;
+                    // Add a slow LFO to modulate the filter for bird-like chirping
+                    const lfo = audioContext.createOscillator();
+                    lfo.frequency.value = 0.5;
+                    const lfoGain = audioContext.createGain();
+                    lfoGain.gain.value = 1000;
+
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
 
                     noise.connect(filter);
-                    filter.connect(gainEnv);
-                    gainEnv.connect(masterGain);
+                    filter.connect(ambientMasterGain);
 
                     noise.start(0);
-                    ambientOscillators.push(noise);
+                    lfo.start(0);
+                    ambientOscillators.push(noise, lfo);
                     ambientNoiseNode = noise;
 
                 } else if (type === 'cafe') {
@@ -4167,7 +4197,7 @@
                     filter.Q.value = 1;
 
                     noise.connect(filter);
-                    filter.connect(masterGain);
+                    filter.connect(ambientMasterGain);
                     noise.start(0);
                     ambientOscillators.push(noise);
                     ambientNoiseNode = noise;
@@ -4180,7 +4210,7 @@
                     filter.frequency.value = 200;
 
                     noise.connect(filter);
-                    filter.connect(masterGain);
+                    filter.connect(ambientMasterGain);
                     noise.start(0);
                     ambientOscillators.push(noise);
                     ambientNoiseNode = noise;
@@ -4193,6 +4223,22 @@
         function changeAmbientSound(type) {
             localStorage.setItem('ambientSound', type);
             playAmbientSound(type);
+        }
+
+        function changeAmbientVolume(value) {
+            ambientVolume = parseFloat(value) / 100;
+            localStorage.setItem('ambientVolume', value);
+            document.getElementById('ambient-volume-display').textContent = value + '%';
+
+            // Update existing ambient sound volume
+            if (ambientMasterGain) {
+                ambientMasterGain.gain.value = ambientVolume;
+            }
+        }
+
+        function changeParticleMode(mode) {
+            localStorage.setItem('particleMode', mode);
+            initParticles();
         }
 
         // Initialize audio context on first click anywhere
@@ -4270,22 +4316,36 @@
 
             if (!particlesEnabled) return;
 
-            const now = new Date();
-            const hour = now.getHours();
-            const month = now.getMonth(); // 0-11
+            // Check if manual mode is selected
+            const particleMode = localStorage.getItem('particleMode') || 'auto';
 
-            // Determine time of day
             let timeClass = 'afternoon';
-            if (hour >= 5 && hour < 9) timeClass = 'morning';
-            else if (hour >= 9 && hour < 17) timeClass = 'afternoon';
-            else if (hour >= 17 && hour < 21) timeClass = 'evening';
-            else timeClass = 'night';
-
-            // Determine season
             let seasonClass = '';
-            if (month >= 11 || month <= 1) seasonClass = 'snow'; // Winter
-            else if (month >= 2 && month <= 4) seasonClass = 'spring'; // Spring
-            else if (month >= 8 && month <= 10) seasonClass = 'autumn'; // Autumn
+
+            if (particleMode === 'auto') {
+                // Automatic mode - determine by time and season
+                const now = new Date();
+                const hour = now.getHours();
+                const month = now.getMonth(); // 0-11
+
+                // Determine time of day
+                if (hour >= 5 && hour < 9) timeClass = 'morning';
+                else if (hour >= 9 && hour < 17) timeClass = 'afternoon';
+                else if (hour >= 17 && hour < 21) timeClass = 'evening';
+                else timeClass = 'night';
+
+                // Determine season
+                if (month >= 11 || month <= 1) seasonClass = 'snow'; // Winter
+                else if (month >= 2 && month <= 4) seasonClass = 'spring'; // Spring
+                else if (month >= 8 && month <= 10) seasonClass = 'autumn'; // Autumn
+            } else {
+                // Manual mode - use selected mode
+                if (['morning', 'afternoon', 'evening', 'night'].includes(particleMode)) {
+                    timeClass = particleMode;
+                } else if (['snow', 'spring', 'autumn'].includes(particleMode)) {
+                    seasonClass = particleMode;
+                }
+            }
 
             // More particles at night and during winter
             const particleCount = (timeClass === 'night' ? 60 : 50) + (seasonClass === 'snow' ? 20 : 0);
@@ -4461,6 +4521,22 @@
                     if (savedAmbient !== 'none') {
                         setTimeout(() => playAmbientSound(savedAmbient), 1000);
                     }
+                }
+
+                // Initialize ambient volume
+                const savedVolume = localStorage.getItem('ambientVolume') || '15';
+                const volumeSlider = document.getElementById('ambient-volume');
+                const volumeDisplay = document.getElementById('ambient-volume-display');
+                if (volumeSlider && volumeDisplay) {
+                    volumeSlider.value = savedVolume;
+                    volumeDisplay.textContent = savedVolume + '%';
+                }
+
+                // Initialize particle mode
+                const savedParticleMode = localStorage.getItem('particleMode') || 'auto';
+                const particleModeSelect = document.getElementById('particle-mode');
+                if (particleModeSelect) {
+                    particleModeSelect.value = savedParticleMode;
                 }
 
                 // Initialize favourites tab visibility
