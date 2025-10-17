@@ -1114,11 +1114,21 @@
         }
 
         /* Category Color Variants */
-        .category-professional { --category-color: #667eea; }
-        .category-system { --category-color: #fc8181; }
-        .category-external { --category-color: #48bb78; }
-        .category-family { --category-color: #ed8936; }
-        .category-default { --category-color: #667eea; }
+        .category-professional {
+            --category-color: var(--color-professional, #667eea);
+        }
+        .category-system {
+            --category-color: var(--color-system, #fc8181);
+        }
+        .category-external {
+            --category-color: var(--color-external, #48bb78);
+        }
+        .category-family {
+            --category-color: var(--color-family, #ed8936);
+        }
+        .category-default {
+            --category-color: var(--color-professional, #667eea);
+        }
 
         [data-category] .service-icon {
             background: linear-gradient(135deg, var(--category-color) 0%, color-mix(in srgb, var(--category-color) 70%, black) 100%);
