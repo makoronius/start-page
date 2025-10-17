@@ -2388,7 +2388,14 @@
             config.categories.forEach((category, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'tab-btn';
-                btn.textContent = category.name;
+
+                // Add icon if available
+                if (category.icon) {
+                    btn.textContent = `${category.icon} ${category.name}`;
+                } else {
+                    btn.textContent = category.name;
+                }
+
                 btn.onclick = () => switchCategory(category.name);
 
                 if (index === 0 && !window.currentCategory) {
@@ -2575,6 +2582,10 @@
                 categoryDiv.innerHTML = `
                     <div class="category-editor-content">
                         <span class="category-drag-handle" title="Drag to reorder">⋮⋮</span>
+                        <div class="form-group" style="flex: 0 0 80px; margin: 0;">
+                            <label>Icon</label>
+                            <input type="text" value="${category.icon || ''}" onchange="updateCategory(${index}, 'icon', this.value)" placeholder="📁">
+                        </div>
                         <div class="form-group" style="flex: 1; margin: 0;">
                             <label>Name</label>
                             <input type="text" value="${category.name || ''}" onchange="updateCategory(${index}, 'name', this.value)">
