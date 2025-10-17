@@ -27,7 +27,9 @@ app.config['SESSION_COOKIE_DOMAIN'] = None  # Allow any domain
 app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
 app.config['SESSION_COOKIE_PATH'] = '/'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = False  # Don't regenerate on each request
-CORS(app, supports_credentials=True, origins=['*'], allow_headers=['Content-Type'], expose_headers=['Set-Cookie'])
+# Note: Cannot use origins=['*'] with credentials=True. Instead use supports_credentials with no origins specified
+# This allows the browser to use the request's origin
+CORS(app, supports_credentials=True, allow_headers=['Content-Type'], expose_headers=['Set-Cookie'])
 
 # Rate limiting setup
 # Custom key function to exempt localhost from rate limiting
