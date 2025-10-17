@@ -1356,8 +1356,14 @@
         </header>
 
         <div class="tabs">
+            <button id="favourites-tab-btn" class="tab-btn" onclick="switchToFavourites()" style="display: none;">⭐ Favourites</button>
             <div id="category-tabs" class="category-tabs"></div>
             <button id="config-tab-btn" class="tab-btn" onclick="switchTab('config')" style="display: none;">Config</button>
+        </div>
+
+        <div id="favourites-content" class="tab-content">
+            <h2 style="margin-bottom: 1.5rem;">⭐ Favourites</h2>
+            <div id="favourites-services-grid" class="services-grid"></div>
         </div>
 
         <div id="services-tab" class="tab-content active">
@@ -1569,21 +1575,12 @@
 
         <!-- Tabs -->
         <div class="settings-tabs">
-            <button class="settings-tab active" onclick="switchSettingsTab('favourites')">⭐ Favourites</button>
-            <button class="settings-tab" onclick="switchSettingsTab('profile')">👤 Profile</button>
+            <button class="settings-tab active" onclick="switchSettingsTab('profile')">👤 Profile</button>
             <button class="settings-tab" onclick="switchSettingsTab('customization')">🎨 Customization</button>
         </div>
 
-        <!-- Favourites Tab -->
-        <div id="favourites-tab" class="settings-tab-content active">
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Quick access to all your favorited services</p>
-            <div id="favourites-list" style="display: grid; gap: 0.75rem;">
-                <!-- Favorited services will be populated here -->
-            </div>
-        </div>
-
         <!-- Profile Tab -->
-        <div id="profile-tab" class="settings-tab-content">
+        <div id="profile-tab" class="settings-tab-content active">
             <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Profile Information</h3>
             <div id="profile-message"></div>
 
@@ -1982,7 +1979,6 @@
             const tabButtons = document.querySelectorAll('.settings-tab');
             tabButtons.forEach(button => {
                 const tabMap = {
-                    'favourites': 'Favourites',
                     'profile': 'Profile',
                     'customization': 'Customization'
                 };
@@ -1990,78 +1986,24 @@
                     button.classList.add('active');
                 }
             });
-
-            // Populate favourites if that tab is selected
-            if (tabName === 'favourites') {
-                populateFavourites();
-            }
         }
 
-        function populateFavourites() {
-            const favouritesList = document.getElementById('favourites-list');
-            if (!favouritesList || !config) return;
-
-            const favourites = [];
-
-            // Collect all favorited services from all categories
-            Object.keys(config.categories || {}).forEach(categoryName => {
-                const category = config.categories[categoryName];
-                if (category.services) {
-                    category.services.forEach(service => {
-                        if (service.favorite) {
-                            favourites.push({
-                                ...service,
-                                category: categoryName,
-                                categoryColor: getCategoryColor(categoryName)
-                            });
-                        }
-                    });
-                }
-            });
-
-            if (favourites.length === 0) {
-                favouritesList.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No favorites yet. Click the ⭐ icon on any service to add it to your favorites!</p>';
-                return;
-            }
-
-            // Render favorites as service cards
-            favouritesList.innerHTML = favourites.map(service => `
-                <div class="service-card" style="display: flex; align-items: center; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); gap: 1rem;">
-                    <div class="service-icon" style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${service.categoryColor} 0%, color-mix(in srgb, ${service.categoryColor} 70%, black) 100%); font-size: 1.2rem;">
-                        ${service.icon || '🔗'}
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 500; color: var(--text-primary);">${service.name}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-secondary);">${service.category}</div>
-                    </div>
-                    <a href="${service.url}" target="_blank" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem; text-decoration: none;">Open</a>
-                </div>
-            `).join('');
-        }
-
-        function getCategoryColor(categoryName) {
-            const colorMap = {
-                'professional': 'var(--color-professional, #667eea)',
-                'system': 'var(--color-system, #fc8181)',
-                'external': 'var(--color-external, #48bb78)',
-                'family': 'var(--color-family, #ed8936)'
-            };
-            return colorMap[categoryName.toLowerCase()] || 'var(--color-professional, #667eea)';
-        }
 
         function toggleFavouritesTab() {
             const checkbox = document.getElementById('show-favourites-tab');
-            const favouritesTabBtn = document.querySelector('.settings-tab[onclick*="favourites"]');
-            const favouritesTab = document.getElementById('favourites-tab');
+            const favouritesTabBtn = document.getElementById('favourites-tab-btn');
+            const favouritesContent = document.getElementById('favourites-content');
 
             if (checkbox.checked) {
                 favouritesTabBtn.style.display = 'inline-block';
                 localStorage.setItem('showFavouritesTab', 'true');
             } else {
                 favouritesTabBtn.style.display = 'none';
-                // If currently viewing favourites tab, switch to profile
-                if (favouritesTab.classList.contains('active')) {
-                    switchSettingsTab('profile');
+                // If currently viewing favourites, switch to first category
+                if (favouritesContent && favouritesContent.classList.contains('active')) {
+                    if (config.categories && config.categories.length > 0) {
+                        switchCategory(config.categories[0].name);
+                    }
                 }
                 localStorage.setItem('showFavouritesTab', 'false');
             }
@@ -2415,19 +2357,77 @@
             // Update active category tab
             document.querySelectorAll('#category-tabs .tab-btn').forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.textContent === categoryName) {
+                if (btn.textContent === categoryName || btn.textContent.includes(categoryName)) {
                     btn.classList.add('active');
                 }
             });
 
+            // Deactivate favourites and config tabs
+            document.getElementById('favourites-tab-btn')?.classList.remove('active');
+            document.getElementById('config-tab-btn')?.classList.remove('active');
+
             // Make sure services tab is active
-            document.querySelectorAll('.tabs > .tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById('services-tab').classList.add('active');
 
             window.currentCategory = categoryName;
             renderServicesByCategory(categoryName);
             saveState();
+        }
+
+        function switchToFavourites() {
+            // Deactivate all category tabs
+            document.querySelectorAll('#category-tabs .tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('config-tab-btn')?.classList.remove('active');
+
+            // Activate favourites tab
+            document.getElementById('favourites-tab-btn').classList.add('active');
+
+            // Show favourites content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('favourites-content').classList.add('active');
+
+            // Render favourites
+            renderFavouritesServices();
+            window.currentCategory = null;
+            saveState();
+        }
+
+        function renderFavouritesServices() {
+            const grid = document.getElementById('favourites-services-grid');
+            grid.innerHTML = '';
+
+            if (!config || !config.services) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No services configured yet.</p>';
+                return;
+            }
+
+            // Get all favorited services
+            const favorites = config.services.filter(service => {
+                const favs = getFavorites();
+                return favs.includes(`${service.category}-${service.name}`);
+            });
+
+            if (favorites.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No favorites yet. Click the ⭐ icon on any service to add it to your favorites!</p>';
+                return;
+            }
+
+            // Apply grid columns setting
+            const gridColumns = config.settings?.grid_columns || 'auto';
+            if (gridColumns === 'auto') {
+                grid.removeAttribute('data-columns');
+            } else {
+                grid.setAttribute('data-columns', gridColumns);
+            }
+
+            // Render favorite services
+            favorites.forEach(service => {
+                const serviceCard = createServiceCard(service);
+                grid.appendChild(serviceCard);
+            });
         }
 
         // Render services by category
@@ -3679,6 +3679,23 @@
 
         // Sound effects
         let soundEnabled = localStorage.getItem('soundEnabled') === 'true';
+        let audioContext = null;
+
+        // Initialize AudioContext on first user interaction
+        function initAudioContext() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('AudioContext not supported');
+                }
+            }
+            // Resume if suspended (required by some browsers)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
         const sounds = {
             click: () => playTone(800, 0.1, 0.05),
             favorite: () => playTone(1200, 0.2, 0.1),
@@ -3688,8 +3705,11 @@
 
         function playTone(frequency, duration, volume) {
             if (!soundEnabled) return;
+
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                initAudioContext();
+                if (!audioContext) return;
+
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
 
@@ -3703,7 +3723,7 @@
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + duration);
             } catch (e) {
-                console.log('Sound playback not supported');
+                console.log('Sound playback error:', e);
             }
         }
 
@@ -3714,8 +3734,18 @@
         function toggleSound() {
             soundEnabled = document.getElementById('sound-enabled').checked;
             localStorage.setItem('soundEnabled', soundEnabled);
-            if (soundEnabled) playSound('click');
+            if (soundEnabled) {
+                initAudioContext();
+                playSound('click');
+            }
         }
+
+        // Initialize audio context on first click anywhere
+        document.addEventListener('click', function initAudio() {
+            if (soundEnabled) {
+                initAudioContext();
+            }
+        }, { once: true });
 
         // Background particles
         function initParticles() {
@@ -3910,7 +3940,7 @@
                 // Initialize favourites tab visibility
                 const showFavouritesTab = localStorage.getItem('showFavouritesTab') !== 'false'; // default to true
                 const favouritesCheckbox = document.getElementById('show-favourites-tab');
-                const favouritesTabBtn = document.querySelector('.settings-tab[onclick*="favourites"]');
+                const favouritesTabBtn = document.getElementById('favourites-tab-btn');
 
                 if (favouritesCheckbox) {
                     favouritesCheckbox.checked = showFavouritesTab;
