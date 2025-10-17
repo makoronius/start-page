@@ -4709,17 +4709,128 @@
                     ambientOscillators.push({ stop: () => clearInterval(clinkInterval) });
 
                 } else if (type === 'fireplace') {
-                    // Fireplace: low rumble with crackles
-                    const noise = createWhiteNoise();
-                    const filter = audioContext.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.value = 200;
+                    // Fireplace: realistic crackling fire with multiple layers
 
-                    noise.connect(filter);
-                    filter.connect(ambientMasterGain);
-                    noise.start(0);
-                    ambientOscillators.push(noise);
-                    ambientNoiseNode = noise;
+                    // 1. Base rumble - deep fire sound
+                    const rumble = createWhiteNoise();
+                    const rumbleFilter = audioContext.createBiquadFilter();
+                    rumbleFilter.type = 'lowpass';
+                    rumbleFilter.frequency.value = 150;
+                    const rumbleGain = audioContext.createGain();
+                    rumbleGain.gain.value = 0.15;
+
+                    // Add LFO to rumble for breathing effect
+                    const rumbleLFO = audioContext.createOscillator();
+                    rumbleLFO.frequency.value = 0.2;
+                    const rumbleLFOGain = audioContext.createGain();
+                    rumbleLFOGain.gain.value = 0.03;
+                    rumbleLFO.connect(rumbleLFOGain);
+                    rumbleLFOGain.connect(rumbleGain.gain);
+
+                    rumble.connect(rumbleFilter);
+                    rumbleFilter.connect(rumbleGain);
+                    rumbleGain.connect(ambientMasterGain);
+                    rumble.start(0);
+                    rumbleLFO.start(0);
+                    ambientOscillators.push(rumble);
+                    ambientOscillators.push(rumbleLFO);
+
+                    // 2. Mid-range crackle layer
+                    const midCrackle = createWhiteNoise();
+                    const midFilter = audioContext.createBiquadFilter();
+                    midFilter.type = 'bandpass';
+                    midFilter.frequency.value = 800;
+                    midFilter.Q.value = 2;
+                    const midGain = audioContext.createGain();
+                    midGain.gain.value = 0.08;
+
+                    midCrackle.connect(midFilter);
+                    midFilter.connect(midGain);
+                    midGain.connect(ambientMasterGain);
+                    midCrackle.start(0);
+                    ambientOscillators.push(midCrackle);
+
+                    // 3. Random crackles and pops
+                    function createCrackle(intensity = 1) {
+                        const crackle = createWhiteNoise();
+                        const crackleFilter = audioContext.createBiquadFilter();
+                        crackleFilter.type = 'bandpass';
+
+                        // Vary frequency for different crackle types
+                        const baseFreq = 400 + Math.random() * 2000;
+                        crackleFilter.frequency.value = baseFreq;
+                        crackleFilter.Q.value = 3 + Math.random() * 5;
+
+                        const crackleGain = audioContext.createGain();
+                        const now = audioContext.currentTime;
+                        const duration = 0.05 + Math.random() * 0.15;
+                        const maxGain = (0.2 + Math.random() * 0.3) * intensity;
+
+                        // Sharp attack, quick decay
+                        crackleGain.gain.setValueAtTime(0, now);
+                        crackleGain.gain.linearRampToValueAtTime(maxGain, now + 0.01);
+                        crackleGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                        crackle.connect(crackleFilter);
+                        crackleFilter.connect(crackleGain);
+                        crackleGain.connect(ambientMasterGain);
+
+                        crackle.start(now);
+                        crackle.stop(now + duration + 0.01);
+                    }
+
+                    // 4. Random pops (lower frequency, louder)
+                    function createPop() {
+                        const pop = createWhiteNoise();
+                        const popFilter = audioContext.createBiquadFilter();
+                        popFilter.type = 'bandpass';
+                        popFilter.frequency.value = 200 + Math.random() * 400;
+                        popFilter.Q.value = 8;
+
+                        const popGain = audioContext.createGain();
+                        const now = audioContext.currentTime;
+                        const duration = 0.08 + Math.random() * 0.12;
+
+                        // Very sharp attack, longer decay
+                        popGain.gain.setValueAtTime(0, now);
+                        popGain.gain.linearRampToValueAtTime(0.4, now + 0.005);
+                        popGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                        pop.connect(popFilter);
+                        popFilter.connect(popGain);
+                        popGain.connect(ambientMasterGain);
+
+                        pop.start(now);
+                        pop.stop(now + duration + 0.01);
+                    }
+
+                    // Schedule crackles at varying intervals
+                    function scheduleCrackles() {
+                        if (ambientOscillators.length > 0) {
+                            // Multiple crackles in quick succession
+                            const burstSize = 1 + Math.floor(Math.random() * 4);
+                            for (let i = 0; i < burstSize; i++) {
+                                setTimeout(() => {
+                                    createCrackle(1 - i * 0.15);
+                                }, i * (30 + Math.random() * 70));
+                            }
+                        }
+                    }
+
+                    // Schedule pops at longer intervals
+                    function schedulePops() {
+                        if (ambientOscillators.length > 0) {
+                            createPop();
+                        }
+                    }
+
+                    // Crackle interval: frequent small bursts
+                    const crackleInterval = setInterval(scheduleCrackles, 300 + Math.random() * 400);
+                    ambientOscillators.push({ stop: () => clearInterval(crackleInterval) });
+
+                    // Pop interval: occasional loud pops
+                    const popInterval = setInterval(schedulePops, 1500 + Math.random() * 2000);
+                    ambientOscillators.push({ stop: () => clearInterval(popInterval) });
                 }
             } catch (e) {
                 console.log('Ambient sound error:', e);
