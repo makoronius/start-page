@@ -404,6 +404,8 @@ ports:
 
 ## 🚀 Planned Features
 
+> 📋 **See [ROADMAP.md](ROADMAP.md) for detailed implementation plan, priorities, and timeline.**
+
 The following features are planned for future releases:
 
 ### 🎨 Enhanced UI/UX
