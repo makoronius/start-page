@@ -1903,6 +1903,11 @@
                     btn.classList.add('active');
                 }
             });
+
+            // Reapply color theme with new light/dark mode
+            if (typeof applyColorTheme === 'function') {
+                applyColorTheme();
+            }
         }
 
         function setTheme(theme) {
@@ -3940,46 +3945,152 @@
         // (Dark/Light mode controls card colors, text, shadows, borders)
         const colorThemes = {
             default: {
-                'bg-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'button-bg': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'color-professional': '#667eea',
-                'color-system': '#fc8181',
-                'color-external': '#48bb78',
-                'color-family': '#ed8936'
+                light: {
+                    'bg-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'bg-card': '#ffffff',
+                    'text-primary': '#333333',
+                    'text-secondary': '#718096',
+                    'text-header': '#ffffff',
+                    'border-color': '#e2e8f0',
+                    'input-bg': '#f7fafc',
+                    'button-bg': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#667eea',
+                    'color-system': '#fc8181',
+                    'color-external': '#48bb78',
+                    'color-family': '#ed8936'
+                },
+                dark: {
+                    'bg-primary': 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)',
+                    'bg-card': '#2d3748',
+                    'text-primary': '#e2e8f0',
+                    'text-secondary': '#a0aec0',
+                    'text-header': '#e2e8f0',
+                    'border-color': '#4a5568',
+                    'input-bg': '#1a202c',
+                    'button-bg': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#8b7fd3',
+                    'color-system': '#fc8181',
+                    'color-external': '#68d391',
+                    'color-family': '#ed8936'
+                }
             },
             vibrant: {
-                'bg-primary': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
-                'button-bg': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
-                'color-professional': '#e01e5a',
-                'color-system': '#2eb67d',
-                'color-external': '#ecb22e',
-                'color-family': '#36c5f0'
+                light: {
+                    'bg-primary': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
+                    'bg-card': '#ffffff',
+                    'text-primary': '#333333',
+                    'text-secondary': '#718096',
+                    'text-header': '#ffffff',
+                    'border-color': '#e2e8f0',
+                    'input-bg': '#f7fafc',
+                    'button-bg': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#e01e5a',
+                    'color-system': '#2eb67d',
+                    'color-external': '#ecb22e',
+                    'color-family': '#36c5f0'
+                },
+                dark: {
+                    'bg-primary': 'linear-gradient(135deg, #2d1625 0%, #3d2533 100%)',
+                    'bg-card': '#3d2533',
+                    'text-primary': '#fce7ef',
+                    'text-secondary': '#d4a5b8',
+                    'text-header': '#fce7ef',
+                    'border-color': '#5a3d4a',
+                    'input-bg': '#2d1625',
+                    'button-bg': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#ff6b9d',
+                    'color-system': '#3ec993',
+                    'color-external': '#f5d042',
+                    'color-family': '#4dd4f7'
+                }
             },
             pastel: {
-                'bg-primary': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
-                'button-bg': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
-                'color-professional': '#b4a7d6',
-                'color-system': '#f4a5a5',
-                'color-external': '#a8e6cf',
-                'color-family': '#ffd3b6'
+                light: {
+                    'bg-primary': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
+                    'bg-card': '#ffffff',
+                    'text-primary': '#333333',
+                    'text-secondary': '#718096',
+                    'text-header': '#ffffff',
+                    'border-color': '#e2e8f0',
+                    'input-bg': '#f7fafc',
+                    'button-bg': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#b4a7d6',
+                    'color-system': '#f4a5a5',
+                    'color-external': '#a8e6cf',
+                    'color-family': '#ffd3b6'
+                },
+                dark: {
+                    'bg-primary': 'linear-gradient(135deg, #2e2640 0%, #3d2e2e 100%)',
+                    'bg-card': '#3d2e3d',
+                    'text-primary': '#e9e4f0',
+                    'text-secondary': '#c4b5d9',
+                    'text-header': '#e9e4f0',
+                    'border-color': '#5a4a5a',
+                    'input-bg': '#2e2640',
+                    'button-bg': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#c4b5e6',
+                    'color-system': '#f4a5a5',
+                    'color-external': '#b8f0d9',
+                    'color-family': '#ffe3c6'
+                }
             },
             monochrome: {
-                'bg-primary': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
-                'button-bg': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
-                'color-professional': '#4a5568',
-                'color-system': '#718096',
-                'color-external': '#a0aec0',
-                'color-family': '#cbd5e0'
+                light: {
+                    'bg-primary': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
+                    'bg-card': '#ffffff',
+                    'text-primary': '#333333',
+                    'text-secondary': '#718096',
+                    'text-header': '#ffffff',
+                    'border-color': '#e2e8f0',
+                    'input-bg': '#f7fafc',
+                    'button-bg': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#4a5568',
+                    'color-system': '#718096',
+                    'color-external': '#a0aec0',
+                    'color-family': '#cbd5e0'
+                },
+                dark: {
+                    'bg-primary': 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)',
+                    'bg-card': '#1a1f2e',
+                    'text-primary': '#e2e8f0',
+                    'text-secondary': '#94a3b8',
+                    'text-header': '#e2e8f0',
+                    'border-color': '#2d3748',
+                    'input-bg': '#0f1419',
+                    'button-bg': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
+                    'button-text': '#ffffff',
+                    'color-professional': '#64748b',
+                    'color-system': '#94a3b8',
+                    'color-external': '#cbd5e0',
+                    'color-family': '#e2e8f0'
+                }
             }
         };
 
         function applyColorTheme() {
             const theme = document.getElementById('color-theme')?.value || 'default';
-            const colors = colorThemes[theme];
+            const themeData = colorThemes[theme];
 
-            console.log('Applying color theme:', theme);
+            if (!themeData) {
+                console.error('Theme not found:', theme);
+                return;
+            }
 
-            // Apply only theme-specific colors (not dark/light mode colors)
+            // Get current light/dark mode
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            const mode = isDarkMode ? 'dark' : 'light';
+            const colors = themeData[mode];
+
+            console.log('Applying color theme:', theme, 'mode:', mode);
+
+            // Apply all colors for the current theme and mode
             Object.keys(colors).forEach(varName => {
                 document.documentElement.style.setProperty(`--${varName}`, colors[varName]);
                 console.log(`Set --${varName} to ${colors[varName]}`);
