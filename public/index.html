@@ -1296,6 +1296,74 @@
             75% { transform: translateY(-20px) translateX(5px); }
         }
 
+        /* Emoji Picker */
+        .emoji-categories {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .emoji-cat-btn {
+            padding: 0.5rem 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .emoji-cat-btn:hover {
+            background: var(--card-bg-hover);
+        }
+
+        .emoji-cat-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .emoji-item {
+            font-size: 2rem;
+            padding: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+        }
+
+        .emoji-item:hover {
+            background: var(--card-bg-hover);
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .emoji-icon-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+        .emoji-icon-input-wrapper input {
+            flex: 1;
+        }
+
+        .emoji-icon-input-wrapper button {
+            padding: 0.5rem 1rem;
+            white-space: nowrap;
+        }
+
         /* Responsive adjustments for new features */
         @media (max-width: 768px) {
             .settings-panel {
@@ -1393,10 +1461,6 @@
                 <div id="general-subtab" class="sub-tab-content active">
                     <div id="settings-editor"></div>
 
-                    <h3 style="margin-bottom: 1rem; margin-top: 2rem;">Categories</h3>
-                    <div id="categories-editor"></div>
-                    <button class="btn btn-primary" onclick="addCategory()" style="margin-top: 1rem;">+ Add New Category</button>
-
                     <div style="margin-top: 2rem;">
                         <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
                         <button class="btn btn-secondary" onclick="generateCSV()">📄 Generate CSV to Server</button>
@@ -1405,10 +1469,16 @@
 
                 <!-- Services Sub-tab -->
                 <div id="services-subtab" class="sub-tab-content">
+                    <h3 style="margin-bottom: 1rem;">Categories</h3>
+                    <div id="categories-editor"></div>
+                    <button class="btn btn-primary" onclick="addCategory()" style="margin-top: 1rem;">+ Add New Category</button>
+
+                    <h3 style="margin-bottom: 1rem; margin-top: 2rem;">Services</h3>
                     <div id="services-by-category"></div>
 
                     <div style="margin-top: 2rem;">
                         <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
+                        <button class="btn btn-secondary" onclick="generateCSV()">📄 Generate CSV to Server</button>
                     </div>
                 </div>
 
@@ -1527,7 +1597,10 @@
 
             <div class="form-group">
                 <label for="service-icon">Icon (emoji)</label>
-                <input type="text" id="service-icon" placeholder="🔧">
+                <div class="emoji-icon-input-wrapper">
+                    <input type="text" id="service-icon" placeholder="🔧">
+                    <button type="button" class="btn btn-secondary" onclick="openEmojiPicker('service-icon')">Choose</button>
+                </div>
             </div>
 
             <div class="form-group">
@@ -1563,6 +1636,23 @@
                 <button class="btn btn-primary" onclick="saveService()">Save Service</button>
                 <button class="btn btn-secondary" onclick="closeServiceModal()">Cancel</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Emoji Picker Modal -->
+    <div id="emoji-picker-modal" class="modal-overlay hidden" onclick="closeEmojiPicker(event)">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <button class="modal-close" onclick="closeEmojiPicker()">&times;</button>
+            <h2>Choose an Emoji</h2>
+
+            <div class="emoji-categories">
+                <button class="emoji-cat-btn active" onclick="showEmojiCategory('smileys')">😊 Smileys</button>
+                <button class="emoji-cat-btn" onclick="showEmojiCategory('objects')">🔧 Objects</button>
+                <button class="emoji-cat-btn" onclick="showEmojiCategory('symbols')">⚙️ Symbols</button>
+                <button class="emoji-cat-btn" onclick="showEmojiCategory('nature')">🌿 Nature</button>
+            </div>
+
+            <div id="emoji-grid" class="emoji-grid"></div>
         </div>
     </div>
 
@@ -2582,9 +2672,12 @@
                 categoryDiv.innerHTML = `
                     <div class="category-editor-content">
                         <span class="category-drag-handle" title="Drag to reorder">⋮⋮</span>
-                        <div class="form-group" style="flex: 0 0 80px; margin: 0;">
+                        <div class="form-group" style="flex: 0 0 140px; margin: 0;">
                             <label>Icon</label>
-                            <input type="text" value="${category.icon || ''}" onchange="updateCategory(${index}, 'icon', this.value)" placeholder="📁">
+                            <div class="emoji-icon-input-wrapper">
+                                <input type="text" id="category-icon-${index}" value="${category.icon || ''}" onchange="updateCategory(${index}, 'icon', this.value)" placeholder="📁" style="width: 50px;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;" onclick="openEmojiPicker('category-icon-${index}')">📝</button>
+                            </div>
                         </div>
                         <div class="form-group" style="flex: 1; margin: 0;">
                             <label>Name</label>
@@ -2607,7 +2700,7 @@
             container.innerHTML = '';
 
             if (!config.categories || config.categories.length === 0) {
-                container.innerHTML = '<p>No categories defined. Please add categories in General Settings first.</p>';
+                container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem; text-align: center;">No categories defined. Please add categories above first.</p>';
                 return;
             }
 
@@ -3746,6 +3839,64 @@
                 initAudioContext();
             }
         }, { once: true });
+
+        // Emoji Picker
+        let currentEmojiTargetInput = null;
+
+        const emojiData = {
+            smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '☺️', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐'],
+            objects: ['⚙️', '🔧', '🔨', '🛠️', '⚡', '💻', '🖥️', '⌨️', '🖱️', '🖨️', '💾', '💿', '📀', '🧮', '📱', '📞', '☎️', '📟', '📠', '📡', '🔋', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '📦', '📫', '📪', '📬'],
+            symbols: ['⭐', '✨', '💫', '🌟', '✅', '❌', '❗', '❓', '⚠️', '🚫', '💯', '🔥', '💥', '✔️', '➕', '➖', '✖️', '➗', '♾️', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '🟤', '⚫', '⚪', '🟥', '🟧', '🟨', '🟩'],
+            nature: ['🌿', '🍀', '🎋', '🎍', '🌱', '🌲', '🌳', '🌴', '🌵', '🌾', '🌷', '🌸', '🌹', '🥀', '🌺', '🌻', '🌼', '🌽', '🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', '🍐', '🍑', '🍒', '🍓']
+        };
+
+        function openEmojiPicker(inputId) {
+            currentEmojiTargetInput = inputId;
+            document.getElementById('emoji-picker-modal').classList.remove('hidden');
+            showEmojiCategory('smileys');
+            playSound('click');
+        }
+
+        function closeEmojiPicker(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('emoji-picker-modal').classList.add('hidden');
+            currentEmojiTargetInput = null;
+        }
+
+        function showEmojiCategory(category) {
+            // Update active button
+            document.querySelectorAll('.emoji-cat-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Render emojis
+            const grid = document.getElementById('emoji-grid');
+            grid.innerHTML = '';
+
+            const emojis = emojiData[category] || [];
+            emojis.forEach(emoji => {
+                const emojiDiv = document.createElement('div');
+                emojiDiv.className = 'emoji-item';
+                emojiDiv.textContent = emoji;
+                emojiDiv.onclick = () => selectEmoji(emoji);
+                grid.appendChild(emojiDiv);
+            });
+        }
+
+        function selectEmoji(emoji) {
+            if (currentEmojiTargetInput) {
+                const input = document.getElementById(currentEmojiTargetInput);
+                if (input) {
+                    input.value = emoji;
+                    // Trigger onchange event
+                    const event = new Event('change');
+                    input.dispatchEvent(event);
+                }
+            }
+            closeEmojiPicker();
+            playSound('success');
+        }
 
         // Background particles
         function initParticles() {
