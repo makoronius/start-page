@@ -1,159 +1,164 @@
 settings:
-  hostname: hypervisor
+  hostname: localhost
   title: "Local Services Dashboard"
   subtitle: "Your development environment at a glance"
   auto_refresh_minutes: 5
-  ssh_user: mark
-  csv_path: /mnt/c/Scripts/port-mappings.csv
-  backup_path: /mnt/c/Scripts/backups
-  powershell_script_path: /mnt/c/Scripts/Update-DockerPortProxy.ps1
+  ssh_user: your-username
+  csv_path: /path/to/port-mappings.csv
+  backup_path: /path/to/backups
+  powershell_script_path: /path/to/scripts/Update-DockerPortProxy.ps1
+  grid_columns: auto  # Options: auto, 1, 2, 3, 4
 
 categories:
-  - name: "Professional"
-    description: "Work-related services"
+  - name: "Development"
+    icon: "💻"
+    description: "Development tools and services"
 
-  - name: "External"
-    description: "External cloud services"
+  - name: "Monitoring"
+    icon: "📊"
+    description: "System monitoring and observability"
 
-  - name: "Family"
-    description: "Family and entertainment services"
+  - name: "Cloud Services"
+    icon: "☁️"
+    description: "External cloud platforms"
 
-  - name: "System"
-    description: "System administration and infrastructure"
+  - name: "Media"
+    icon: "🎬"
+    description: "Entertainment and media services"
 
 services:
-  - name: "PyJob Server"
-    icon: "⚙️"
-    url: "http://hypervisor:5000"
-    description: "Compliance Job Server for automated task processing and workflow management"
-    port: 5000
-    local: true
-    status: running
-    category: "Professional"
-
-  - name: "Confluence"
-    icon: "📚"
-    url: "https://emelianov.atlassian.net/wiki/"
-    description: "Team collaboration and documentation"
-    local: false
-    status: running
-    category: "External"
-
-  - name: "Jira"
-    icon: "📋"
-    url: "https://emelianov.atlassian.net/jira/"
-    description: "Project management and issue tracking"
-    local: false
-    status: running
-    category: "External"
-
-  - name: "ChatGPT"
-    icon: "🤖"
-    url: "https://chat.openai.com/"
-    description: "AI-powered chat assistant"
-    local: false
-    status: running
-    category: "External"
-
-  - name: "Whisper Transcriber"
-    icon: "🎙️"
-    url: "http://hypervisor:5001"
-    description: "GPU-accelerated YouTube transcription with automatic subtitle generation"
-    port: 5001
-    local: true
-    status: running
-    category: "Family"
-
-  - name: "YouTube"
-    icon: "📺"
-    url: "https://www.youtube.com/"
-    description: "Video streaming platform"
-    local: false
-    status: running
-    category: "Family"
-
-  - name: "YouTube Music"
-    icon: "🎵"
-    url: "https://music.youtube.com/"
-    description: "Music streaming service"
-    local: false
-    status: running
-    category: "Family"
-
-  - name: "Gitea"
-    icon: "☕"
-    url: "http://hypervisor:3000"
-    description: "Self-hosted Git service with web interface and CI/CD integration"
-    port: 3000
-    local: true
-    status: running
-    category: "System"
-
+  # Local Development Services
   - name: "Portainer"
     icon: "🐳"
-    url: "https://hypervisor:9443"
-    description: "Docker container management UI for easy deployment and monitoring"
-    port: 9443
-    local: true
-    status: running
-    category: "System"
-
-  - name: "Webhook Server"
-    icon: "🔗"
-    url: "http://hypervisor:9000/health"
-    description: "CI/CD webhook receiver for automatic deployment on git push"
+    url: "http://localhost:9000"
+    description: "Docker container management interface"
     port: 9000
     local: true
     status: running
-    category: "System"
+    category: "Development"
+
+  - name: "GitLab/Gitea"
+    icon: "☕"
+    url: "http://localhost:3000"
+    description: "Self-hosted Git repository manager"
+    port: 3000
+    local: true
+    status: running
+    category: "Development"
+
+  - name: "Jenkins/CI"
+    icon: "🔧"
+    url: "http://localhost:8080"
+    description: "Continuous integration and deployment"
+    port: 8080
+    local: true
+    status: running
+    category: "Development"
+
+  - name: "Database Admin"
+    icon: "🗄️"
+    url: "http://localhost:8081"
+    description: "Database management interface"
+    port: 8081
+    local: true
+    status: running
+    category: "Development"
+
+  # Monitoring Services
+  - name: "Grafana"
+    icon: "📈"
+    url: "http://localhost:3001"
+    description: "Metrics visualization and dashboards"
+    port: 3001
+    local: true
+    status: running
+    category: "Monitoring"
+
+  - name: "Prometheus"
+    icon: "🔥"
+    url: "http://localhost:9090"
+    description: "Time series database and monitoring"
+    port: 9090
+    local: true
+    status: running
+    category: "Monitoring"
+
+  # External Cloud Services
+  - name: "GitHub"
+    icon: "🐙"
+    url: "https://github.com"
+    description: "Source code hosting and collaboration"
+    local: false
+    status: running
+    category: "Cloud Services"
+
+  - name: "Jira/Linear"
+    icon: "📋"
+    url: "https://your-workspace.atlassian.net"
+    description: "Project management and issue tracking"
+    local: false
+    status: running
+    category: "Cloud Services"
+
+  - name: "ChatGPT"
+    icon: "🤖"
+    url: "https://chat.openai.com"
+    description: "AI-powered assistant"
+    local: false
+    status: running
+    category: "Cloud Services"
+
+  # Media Services
+  - name: "Plex/Jellyfin"
+    icon: "📺"
+    url: "http://localhost:32400"
+    description: "Media server and streaming"
+    port: 32400
+    local: true
+    status: running
+    category: "Media"
+
+  - name: "Nextcloud"
+    icon: "☁️"
+    url: "http://localhost:8082"
+    description: "Self-hosted file sync and share"
+    port: 8082
+    local: true
+    status: running
+    category: "Media"
 
 port_mappings:
   - port: 22
     service: "SSH"
-    description: "SSH access to WSL"
+    description: "SSH access"
 
   - port: 80
     service: "Start Page"
-    description: "Local services dashboard"
+    description: "This dashboard"
 
-  - port: 2222
-    service: "Gitea SSH"
-    description: "Gitea SSH for git operations"
-
-  - port: 2376
-    service: "Docker TLS"
-    description: "Docker daemon TLS port"
+  - port: 443
+    service: "HTTPS"
+    description: "Secure web traffic"
 
   - port: 3000
-    service: "Gitea Web"
-    description: "Gitea web interface"
+    service: "Git Server"
+    description: "Git repository web interface"
 
-  - port: 5000
-    service: "pyjobserver"
-    description: "Compliance Job Server"
-
-  - port: 5001
-    service: "Whisper App"
-    description: "Whisper transcription web application"
-
-  - port: 8000
-    service: "Portainer HTTP"
-    description: "Portainer web UI (HTTP)"
+  - port: 8080
+    service: "CI/CD"
+    description: "Build automation"
 
   - port: 9000
-    service: "Webhook Server"
-    description: "CI/CD webhook receiver"
+    service: "Portainer"
+    description: "Container management"
 
-  - port: 9443
-    service: "Portainer HTTPS"
-    description: "Portainer web UI (HTTPS)"
+  - port: 9090
+    service: "Prometheus"
+    description: "Metrics collection"
 
 repositories:
-  - name: "Transcriber"
-    url: "http://hypervisor:3000/mark/transcriber"
+  - name: "Your Project"
+    url: "http://localhost:3000/username/project"
 
-  - name: "Webhook Server"
-    url: "http://hypervisor:3000/mark/webhook-server"
-
-  - name: "Start Page"
-    url: "http://hypervisor:3000/mark/start-page"
+  - name: "Documentation"
+    url: "http://localhost:3000/username/docs"

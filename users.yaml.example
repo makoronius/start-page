@@ -1,44 +1,69 @@
+# Users configuration
+# IMPORTANT: Change all passwords before deployment!
+# Passwords will be automatically hashed with bcrypt on first use.
+
 users:
   - username: "admin"
-    password: "admin123"  # Change this password!
-    email: ""
+    password: "changeme"  # CHANGE THIS!
+    email: "admin@example.com"
+    first_name: "Admin"
+    last_name: "User"
     roles:
       - "Admins"
 
-  - username: "mark"
-    password: "changeme"  # Set your password
-    email: "mark.emelianov@gmail.com"
+  - username: "john"
+    password: "changeme"  # CHANGE THIS!
+    email: "john@example.com"
+    first_name: "John"
+    last_name: "Doe"
     roles:
-      - "Admins"
+      - "Developers"
 
-  - username: "gleb"
-    password: "changeme"  # Set password
-    email: ""
+  - username: "jane"
+    password: "changeme"  # CHANGE THIS!
+    email: "jane@example.com"
+    first_name: "Jane"
+    last_name: "Smith"
     roles:
-      - "Family"
+      - "Users"
 
-  - username: "mary"
-    password: "changeme"  # Set password
-    email: ""
+  - username: "guest"
+    password: "changeme"  # CHANGE THIS!
+    email: "guest@example.com"
+    first_name: "Guest"
+    last_name: "User"
     roles:
-      - "Family"
+      - "Guests"
 
+# Role-based access control
+# Each role can access specific categories defined in config.yaml
 roles:
   - name: "Admins"
-    description: "Full system access"
+    description: "Full system access and configuration"
+    is_admin: true  # Admin flag grants full access
     categories:
-      - "Professional"
-      - "System"
-      - "External"
-      - "Family"
+      - "Development"
+      - "Monitoring"
+      - "Cloud Services"
+      - "Media"
 
-  - name: "Family"
-    description: "Family member access"
+  - name: "Developers"
+    description: "Access to development and monitoring tools"
+    is_admin: false
     categories:
-      - "External"
-      - "Family"
+      - "Development"
+      - "Monitoring"
+      - "Cloud Services"
+
+  - name: "Users"
+    description: "Standard user access"
+    is_admin: false
+    categories:
+      - "Cloud Services"
+      - "Media"
 
   - name: "Guests"
     description: "Limited guest access"
+    is_admin: false
     categories:
-      - "Family"
+      - "Cloud Services"
