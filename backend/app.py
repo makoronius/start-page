@@ -27,13 +27,17 @@ app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
 CORS(app, supports_credentials=True)
 
 # Rate limiting setup
+# Custom key function to exempt localhost from rate limiting
+def rate_limit_key():
+    if is_local_request():
+        return None  # No rate limiting for localhost
+    return get_remote_address()
+
 limiter = Limiter(
-    get_remote_address,
     app=app,
+    key_func=rate_limit_key,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://",
-    # Exempt localhost from rate limiting
-    key_func=lambda: None if is_local_request() else get_remote_address()
+    storage_uri="memory://"
 )
 
 CONFIG_FILE = '/app/config.yaml'
