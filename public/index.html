@@ -335,6 +335,59 @@
             box-shadow: 0 2px 8px var(--shadow);
         }
 
+        .service-list-item {
+            padding: 0.75rem 1rem;
+            background: var(--input-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .service-list-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .service-list-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .service-list-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .service-list-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .service-list-url {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .service-list-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .service-list-actions button {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
         .service-editor.dragging {
             opacity: 0.5;
             transform: scale(0.95);
@@ -1454,6 +1507,59 @@
         </div>
     </div>
 
+    <!-- Service Edit Modal -->
+    <div id="service-modal" class="modal-overlay hidden" onclick="closeServiceModal(event)">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 600px;">
+            <button class="modal-close" onclick="closeServiceModal()">&times;</button>
+            <h2 id="service-modal-title">Edit Service</h2>
+            <div id="service-modal-message"></div>
+
+            <div class="form-group">
+                <label for="service-name">Name *</label>
+                <input type="text" id="service-name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="service-icon">Icon (emoji)</label>
+                <input type="text" id="service-icon" placeholder="🔧">
+            </div>
+
+            <div class="form-group">
+                <label for="service-url">URL *</label>
+                <input type="text" id="service-url" required placeholder="http://localhost:8080">
+            </div>
+
+            <div class="form-group">
+                <label for="service-description">Description</label>
+                <textarea id="service-description" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="service-port">Port</label>
+                <input type="number" id="service-port" placeholder="8080">
+            </div>
+
+            <div class="form-group">
+                <label for="service-category">Category *</label>
+                <select id="service-category" required>
+                    <option value="">Select category...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="service-local">
+                    <span>Local service</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="saveService()">Save Service</button>
+                <button class="btn btn-secondary" onclick="closeServiceModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Panel -->
     <div id="settings-panel" class="settings-panel">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -2527,52 +2633,19 @@
                 categoryServices.forEach((service, localIndex) => {
                     const serviceIndex = config.services.findIndex(s => s === service);
                     const serviceDiv = document.createElement('div');
-                    serviceDiv.className = 'service-editor';
-                    serviceDiv.draggable = true;
+                    serviceDiv.className = 'service-list-item';
                     serviceDiv.dataset.index = serviceIndex;
                     serviceDiv.dataset.category = category.name;
 
-                    // Add drag event listeners
-                    serviceDiv.addEventListener('dragstart', handleServiceDragStart);
-                    serviceDiv.addEventListener('dragend', handleServiceDragEnd);
-
                     serviceDiv.innerHTML = `
-                        <div class="service-editor-header">
-                            <div style="display: flex; align-items: center;">
-                                <span class="drag-handle" title="Drag to move">⋮⋮</span>
-                                <h4 style="margin: 0;">${service.name || 'Service'}</h4>
-                            </div>
+                        <div class="service-list-icon">${service.icon || '🔧'}</div>
+                        <div class="service-list-info">
+                            <div class="service-list-name">${service.name || 'Service'}</div>
+                            <div class="service-list-url">${service.url || ''}</div>
                         </div>
-                        <div class="service-editor-fields">
-                            <div class="form-group">
-                                <label>Name</label>
-                                <input type="text" value="${service.name || ''}" onchange="updateService(${serviceIndex}, 'name', this.value)">
-                            </div>
-                            <div class="form-group">
-                                <label>Icon (emoji)</label>
-                                <input type="text" value="${service.icon || ''}" onchange="updateService(${serviceIndex}, 'icon', this.value)">
-                            </div>
-                            <div class="form-group field-full-width">
-                                <label>URL</label>
-                                <input type="text" value="${service.url || ''}" onchange="updateService(${serviceIndex}, 'url', this.value)">
-                            </div>
-                            <div class="form-group field-full-width">
-                                <label>Description</label>
-                                <textarea onchange="updateService(${serviceIndex}, 'description', this.value)">${service.description || ''}</textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Port</label>
-                                <input type="number" value="${service.port || ''}" onchange="updateService(${serviceIndex}, 'port', parseInt(this.value))">
-                            </div>
-                            <div class="form-group-inline">
-                                <label>
-                                    <input type="checkbox" ${service.local ? 'checked' : ''} onchange="updateService(${serviceIndex}, 'local', this.checked)">
-                                    Local service
-                                </label>
-                            </div>
-                            <div class="field-full-width">
-                                <button class="btn btn-danger" onclick="removeService(${serviceIndex})" style="width: 100%; margin-top: 0.5rem;">🗑 Delete</button>
-                            </div>
+                        <div class="service-list-actions">
+                            <button class="btn btn-primary" onclick="openServiceEditor(${serviceIndex}); event.stopPropagation();">Edit</button>
+                            <button class="btn btn-danger" onclick="removeService(${serviceIndex}); event.stopPropagation();">Delete</button>
                         </div>
                     `;
                     grid.appendChild(serviceDiv);
@@ -2778,18 +2851,11 @@
                 config.services = [];
             }
 
-            config.services.push({
-                name: 'New Service',
-                icon: '🔧',
-                url: 'http://localhost:8080',
-                description: 'Service description',
-                port: 8080,
-                local: true,
-                status: 'running',
-                category: categoryName
-            });
+            // Open the modal for adding new service
+            openServiceEditor(null);
 
-            renderServicesByCategory_Config();
+            // Pre-select the category
+            document.getElementById('service-category').value = categoryName;
         }
 
         // Remove service
@@ -2904,8 +2970,6 @@
 
         // Generate CSV to server
         async function generateCSV() {
-            const messageDiv = document.getElementById('config-message');
-
             try {
                 const response = await fetch('/api/csv/generate', {
                     method: 'POST',
@@ -2917,21 +2981,17 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    let message = `✓ CSV generated successfully at ${result.csv_path}`;
+                    let message = `CSV generated successfully at ${result.csv_path}`;
                     if (result.backup_created) {
-                        message += '<br>✓ Backup created';
+                        message += '. Backup created.';
                     }
-                    messageDiv.innerHTML = `<div class="success">${message}</div>`;
+                    showToast(message, 'success', 5000);
                 } else {
                     throw new Error(result.error || 'Unknown error');
                 }
-
-                setTimeout(() => {
-                    messageDiv.innerHTML = '';
-                }, 5000);
             } catch (error) {
                 console.error('Error generating CSV:', error);
-                messageDiv.innerHTML = `<div class="error">Failed to generate CSV: ${error.message}</div>`;
+                showToast(`Failed to generate CSV: ${error.message}`, 'error');
             }
         }
 
@@ -3420,6 +3480,98 @@
         function closeRoleModal(event) {
             if (event && event.target.id !== 'role-modal') return;
             document.getElementById('role-modal').classList.add('hidden');
+        }
+
+        // Service Modal Functions
+        let currentServiceIndex = null;
+
+        function openServiceEditor(serviceIndex) {
+            currentServiceIndex = serviceIndex;
+            const service = serviceIndex !== null ? config.services[serviceIndex] : null;
+            const modal = document.getElementById('service-modal');
+
+            // Populate category dropdown
+            const categorySelect = document.getElementById('service-category');
+            categorySelect.innerHTML = '<option value="">Select category...</option>';
+            if (config.categories) {
+                config.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.name;
+                    option.textContent = cat.name;
+                    if (service && service.category === cat.name) {
+                        option.selected = true;
+                    }
+                    categorySelect.appendChild(option);
+                });
+            }
+
+            // Populate fields
+            if (service) {
+                document.getElementById('service-modal-title').textContent = 'Edit Service';
+                document.getElementById('service-name').value = service.name || '';
+                document.getElementById('service-icon').value = service.icon || '';
+                document.getElementById('service-url').value = service.url || '';
+                document.getElementById('service-description').value = service.description || '';
+                document.getElementById('service-port').value = service.port || '';
+                document.getElementById('service-local').checked = service.local || false;
+            } else {
+                document.getElementById('service-modal-title').textContent = 'Add Service';
+                document.getElementById('service-name').value = '';
+                document.getElementById('service-icon').value = '🔧';
+                document.getElementById('service-url').value = 'http://localhost:8080';
+                document.getElementById('service-description').value = '';
+                document.getElementById('service-port').value = '8080';
+                document.getElementById('service-local').checked = true;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeServiceModal(event) {
+            if (event && event.target.id !== 'service-modal') return;
+            document.getElementById('service-modal').classList.add('hidden');
+            currentServiceIndex = null;
+        }
+
+        function saveService() {
+            const name = document.getElementById('service-name').value.trim();
+            const icon = document.getElementById('service-icon').value.trim();
+            const url = document.getElementById('service-url').value.trim();
+            const description = document.getElementById('service-description').value.trim();
+            const port = parseInt(document.getElementById('service-port').value) || null;
+            const category = document.getElementById('service-category').value;
+            const local = document.getElementById('service-local').checked;
+
+            if (!name || !url || !category) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+
+            const serviceData = {
+                name,
+                icon: icon || '🔧',
+                url,
+                description,
+                port,
+                category,
+                local,
+                status: 'running'
+            };
+
+            if (currentServiceIndex !== null) {
+                // Update existing service
+                config.services[currentServiceIndex] = serviceData;
+            } else {
+                // Add new service
+                if (!config.services) {
+                    config.services = [];
+                }
+                config.services.push(serviceData);
+            }
+
+            closeServiceModal();
+            renderServicesByCategory_Config();
+            showToast('Service saved. Don\'t forget to save configuration!', 'info');
         }
 
         // UI/UX Enhancement Functions
