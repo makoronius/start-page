@@ -1278,7 +1278,7 @@
             height: 100%;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.1;
+            opacity: 0.15;
         }
 
         .particle {
@@ -1288,11 +1288,51 @@
             animation: float 20s infinite;
         }
 
+        .particle.morning {
+            background: radial-gradient(circle, rgba(255,215,0,0.6), rgba(255,140,0,0.4));
+            box-shadow: 0 0 8px rgba(255,215,0,0.3);
+        }
+
+        .particle.afternoon {
+            background: radial-gradient(circle, rgba(135,206,250,0.6), rgba(255,255,255,0.4));
+            box-shadow: 0 0 6px rgba(135,206,250,0.3);
+        }
+
+        .particle.evening {
+            background: radial-gradient(circle, rgba(255,140,105,0.6), rgba(255,105,180,0.4));
+            box-shadow: 0 0 10px rgba(255,140,105,0.4);
+        }
+
+        .particle.night {
+            background: radial-gradient(circle, rgba(100,149,237,0.6), rgba(138,43,226,0.4));
+            box-shadow: 0 0 12px rgba(138,43,226,0.5);
+        }
+
+        .particle.snow {
+            background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(200,220,255,0.6));
+            animation: snow 15s infinite;
+        }
+
+        .particle.spring {
+            background: radial-gradient(circle, rgba(255,182,193,0.6), rgba(144,238,144,0.5));
+        }
+
+        .particle.autumn {
+            background: radial-gradient(circle, rgba(255,165,0,0.6), rgba(255,99,71,0.5));
+        }
+
         @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            25% { transform: translateY(-20px) translateX(10px); }
-            50% { transform: translateY(-40px) translateX(-10px); }
-            75% { transform: translateY(-20px) translateX(5px); }
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+            25% { transform: translateY(-30px) translateX(20px) rotate(90deg); }
+            50% { transform: translateY(-60px) translateX(-20px) rotate(180deg); }
+            75% { transform: translateY(-30px) translateX(10px) rotate(270deg); }
+        }
+
+        @keyframes snow {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
         }
 
         /* Emoji Picker */
@@ -1731,6 +1771,18 @@
                     <input type="checkbox" id="sound-enabled" onchange="toggleSound()" />
                     Enable Sound Effects
                 </label>
+            </div>
+
+            <div class="form-group">
+                <label for="ambient-sound">Ambient Background Sound</label>
+                <select id="ambient-sound" onchange="changeAmbientSound(this.value)">
+                    <option value="none">None</option>
+                    <option value="rain">Gentle Rain</option>
+                    <option value="ocean">Ocean Waves</option>
+                    <option value="forest">Forest Birds</option>
+                    <option value="cafe">Coffee Shop</option>
+                    <option value="fireplace">Fireplace Crackling</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -3936,8 +3988,8 @@
             playSound('click');
         }
 
-        // Sound effects
-        let soundEnabled = localStorage.getItem('soundEnabled') === 'true';
+        // Sound effects - default to true if not set
+        let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
         let audioContext = null;
 
         // Initialize AudioContext on first user interaction
@@ -3997,6 +4049,150 @@
                 initAudioContext();
                 playSound('click');
             }
+        }
+
+        // Ambient background sound
+        let ambientSound = null;
+        let ambientOscillators = [];
+        let ambientNoiseNode = null;
+
+        function stopAmbientSound() {
+            ambientOscillators.forEach(osc => {
+                try {
+                    osc.stop();
+                } catch(e) {}
+            });
+            ambientOscillators = [];
+
+            if (ambientNoiseNode) {
+                try {
+                    ambientNoiseNode.disconnect();
+                } catch(e) {}
+                ambientNoiseNode = null;
+            }
+        }
+
+        function createWhiteNoise() {
+            if (!audioContext) initAudioContext();
+            if (!audioContext) return null;
+
+            const bufferSize = 2 * audioContext.sampleRate;
+            const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioContext.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+            return whiteNoise;
+        }
+
+        function playAmbientSound(type) {
+            stopAmbientSound();
+
+            if (type === 'none') return;
+
+            initAudioContext();
+            if (!audioContext) return;
+
+            try {
+                const masterGain = audioContext.createGain();
+                masterGain.gain.value = 0.15; // Overall ambient volume
+                masterGain.connect(audioContext.destination);
+
+                if (type === 'rain') {
+                    // Rain: filtered white noise
+                    const noise = createWhiteNoise();
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 1000;
+                    filter.Q.value = 0.5;
+
+                    noise.connect(filter);
+                    filter.connect(masterGain);
+                    noise.start(0);
+                    ambientOscillators.push(noise);
+                    ambientNoiseNode = noise;
+
+                } else if (type === 'ocean') {
+                    // Ocean: low frequency oscillations with noise
+                    const noise = createWhiteNoise();
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 400;
+
+                    const lfo = audioContext.createOscillator();
+                    lfo.frequency.value = 0.2;
+                    const lfoGain = audioContext.createGain();
+                    lfoGain.gain.value = 100;
+
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+
+                    noise.connect(filter);
+                    filter.connect(masterGain);
+
+                    noise.start(0);
+                    lfo.start(0);
+                    ambientOscillators.push(noise, lfo);
+                    ambientNoiseNode = noise;
+
+                } else if (type === 'forest') {
+                    // Forest: gentle high-frequency chirps
+                    const noise = createWhiteNoise();
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'highpass';
+                    filter.frequency.value = 2000;
+
+                    const gainEnv = audioContext.createGain();
+                    gainEnv.gain.value = 0.05;
+
+                    noise.connect(filter);
+                    filter.connect(gainEnv);
+                    gainEnv.connect(masterGain);
+
+                    noise.start(0);
+                    ambientOscillators.push(noise);
+                    ambientNoiseNode = noise;
+
+                } else if (type === 'cafe') {
+                    // Cafe: mid-range filtered noise
+                    const noise = createWhiteNoise();
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 500;
+                    filter.Q.value = 1;
+
+                    noise.connect(filter);
+                    filter.connect(masterGain);
+                    noise.start(0);
+                    ambientOscillators.push(noise);
+                    ambientNoiseNode = noise;
+
+                } else if (type === 'fireplace') {
+                    // Fireplace: low rumble with crackles
+                    const noise = createWhiteNoise();
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 200;
+
+                    noise.connect(filter);
+                    filter.connect(masterGain);
+                    noise.start(0);
+                    ambientOscillators.push(noise);
+                    ambientNoiseNode = noise;
+                }
+            } catch (e) {
+                console.log('Ambient sound error:', e);
+            }
+        }
+
+        function changeAmbientSound(type) {
+            localStorage.setItem('ambientSound', type);
+            playAmbientSound(type);
         }
 
         // Initialize audio context on first click anywhere
@@ -4064,7 +4260,7 @@
             playSound('success');
         }
 
-        // Background particles
+        // Background particles - time and season aware
         function initParticles() {
             const container = document.getElementById('bg-particles');
             if (!container) return;
@@ -4074,15 +4270,42 @@
 
             if (!particlesEnabled) return;
 
-            for (let i = 0; i < 30; i++) {
+            const now = new Date();
+            const hour = now.getHours();
+            const month = now.getMonth(); // 0-11
+
+            // Determine time of day
+            let timeClass = 'afternoon';
+            if (hour >= 5 && hour < 9) timeClass = 'morning';
+            else if (hour >= 9 && hour < 17) timeClass = 'afternoon';
+            else if (hour >= 17 && hour < 21) timeClass = 'evening';
+            else timeClass = 'night';
+
+            // Determine season
+            let seasonClass = '';
+            if (month >= 11 || month <= 1) seasonClass = 'snow'; // Winter
+            else if (month >= 2 && month <= 4) seasonClass = 'spring'; // Spring
+            else if (month >= 8 && month <= 10) seasonClass = 'autumn'; // Autumn
+
+            // More particles at night and during winter
+            const particleCount = (timeClass === 'night' ? 60 : 50) + (seasonClass === 'snow' ? 20 : 0);
+
+            for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.width = Math.random() * 4 + 2 + 'px';
-                particle.style.height = particle.style.width;
+                particle.className = `particle ${timeClass} ${seasonClass}`;
+
+                // Larger particles for winter snow effect
+                const size = seasonClass === 'snow' ? Math.random() * 6 + 3 : Math.random() * 5 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+
+                // Faster animations for more active feel
+                const duration = seasonClass === 'snow' ? Math.random() * 8 + 12 : Math.random() * 8 + 10;
+                particle.style.animationDuration = duration + 's';
                 particle.style.animationDelay = Math.random() * 5 + 's';
+
                 container.appendChild(particle);
             }
         }
@@ -4222,9 +4445,22 @@
                     }
                 }
 
-                const savedSound = localStorage.getItem('soundEnabled') === 'true';
-                if (savedSound && document.getElementById('sound-enabled')) {
-                    document.getElementById('sound-enabled').checked = true;
+                // Initialize sound checkbox - default to true if not set
+                const savedSound = localStorage.getItem('soundEnabled') !== 'false';
+                const soundCheckbox = document.getElementById('sound-enabled');
+                if (soundCheckbox) {
+                    soundCheckbox.checked = savedSound;
+                }
+
+                // Initialize ambient sound
+                const savedAmbient = localStorage.getItem('ambientSound') || 'none';
+                const ambientSelect = document.getElementById('ambient-sound');
+                if (ambientSelect) {
+                    ambientSelect.value = savedAmbient;
+                    // Auto-play ambient sound after a short delay to allow user interaction first
+                    if (savedAmbient !== 'none') {
+                        setTimeout(() => playAmbientSound(savedAmbient), 1000);
+                    }
                 }
 
                 // Initialize favourites tab visibility
