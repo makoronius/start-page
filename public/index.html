@@ -975,6 +975,192 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* Search and Filter Styles */
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            opacity: 0.5;
+        }
+
+        /* Favorite Star */
+        .favorite-star {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+
+        .favorite-star:hover {
+            transform: scale(1.2);
+        }
+
+        .favorite-star.favorited {
+            filter: drop-shadow(0 0 3px gold);
+        }
+
+        /* Animation Classes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .service-card {
+            animation: fadeIn 0.3s ease-out;
+            animation-fill-mode: backwards;
+        }
+
+        .service-card:nth-child(1) { animation-delay: 0.05s; }
+        .service-card:nth-child(2) { animation-delay: 0.1s; }
+        .service-card:nth-child(3) { animation-delay: 0.15s; }
+        .service-card:nth-child(4) { animation-delay: 0.2s; }
+        .service-card:nth-child(5) { animation-delay: 0.25s; }
+        .service-card:nth-child(6) { animation-delay: 0.3s; }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-card);
+            box-shadow: -2px 0 10px var(--shadow);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: transform 0.3s;
+            z-index: 999;
+        }
+
+        .settings-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Easter Egg Container */
+        .easter-egg {
+            position: fixed;
+            bottom: 100px;
+            right: 2rem;
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .easter-egg.show {
+            display: block;
+        }
+
+        /* Category Color Variants */
+        .category-professional { --category-color: #667eea; }
+        .category-system { --category-color: #fc8181; }
+        .category-external { --category-color: #48bb78; }
+        .category-family { --category-color: #ed8936; }
+        .category-default { --category-color: #667eea; }
+
+        [data-category] .service-icon {
+            background: linear-gradient(135deg, var(--category-color) 0%, color-mix(in srgb, var(--category-color) 70%, black) 100%);
+        }
+
+        /* Dynamic Background Particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(-40px) translateX(-10px); }
+            75% { transform: translateY(-20px) translateX(5px); }
+        }
+
+        /* Responsive adjustments for new features */
+        @media (max-width: 768px) {
+            .settings-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .search-container {
+                margin-bottom: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1034,6 +1220,10 @@
         </div>
 
         <div id="services-tab" class="tab-content active">
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-box" class="search-box" placeholder="Search services..." oninput="filterServices()">
+            </div>
             <div id="loading" class="loading">
                 <p>Loading services...</p>
             </div>
@@ -1213,6 +1403,56 @@
             </div>
         </div>
     </div>
+
+    <!-- Settings Panel -->
+    <button class="settings-toggle" onclick="toggleSettings()" title="Settings">⚙️</button>
+    <div id="settings-panel" class="settings-panel">
+        <h2 style="margin-bottom: 1.5rem;">⚙️ Customization</h2>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="sound-enabled" onchange="toggleSound()" />
+                Enable Sound Effects
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="particles-enabled" onchange="toggleParticles()" checked />
+                Enable Background Particles
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="animations-enabled" onchange="toggleAnimations()" checked />
+                Enable Animations
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>Show Favorites Only</label>
+            <input type="checkbox" id="favorites-only" onchange="filterServices()" />
+        </div>
+
+        <div class="form-group">
+            <label>Category Color Theme</label>
+            <select id="color-theme" onchange="applyColorTheme()">
+                <option value="default">Default</option>
+                <option value="vibrant">Vibrant</option>
+                <option value="pastel">Pastel</option>
+                <option value="monochrome">Monochrome</option>
+            </select>
+        </div>
+
+        <button class="btn btn-secondary" onclick="toggleSettings()" style="margin-top: 1rem; width: 100%;">Close</button>
+    </div>
+
+    <!-- Easter Egg Container -->
+    <div id="easter-egg" class="easter-egg"></div>
+
+    <!-- Background Particles -->
+    <div id="bg-particles" class="bg-particles"></div>
 
     <script>
         let config = null;
@@ -1843,6 +2083,12 @@
                 card.href = service.url;
                 card.className = 'service-card';
                 card.target = '_blank';
+                card.style.position = 'relative';
+
+                // Add category color class
+                const catClass = categoryName.toLowerCase().replace(/\s+/g, '-');
+                card.setAttribute('data-category', catClass);
+                card.classList.add(`category-${catClass}`);
 
                 const faviconUrl = getFaviconUrl(service.url);
                 const iconContent = service.icon || '🔧';
@@ -1853,7 +2099,12 @@
                     iconHtml = `<img src="${faviconUrl}" alt="${service.name}" onerror="this.parentElement.innerHTML='${iconContent}'" />`;
                 }
 
+                // Favorite star
+                const isFav = isFavorite(service.name);
+                const starClass = isFav ? 'favorited' : '';
+
                 card.innerHTML = `
+                    <span class="favorite-star ${starClass}" onclick="toggleFavorite('${service.name}', event)">${isFav ? '⭐' : '☆'}</span>
                     <div class="service-icon">${iconHtml}</div>
                     <div class="service-header">
                         <div class="service-title">${service.name}</div>
@@ -2907,8 +3158,269 @@
             document.getElementById('role-modal').classList.add('hidden');
         }
 
+        // UI/UX Enhancement Functions
+
+        // Favorites system (localStorage)
+        function getFavorites() {
+            const favs = localStorage.getItem('favorites');
+            return favs ? JSON.parse(favs) : [];
+        }
+
+        function toggleFavorite(serviceName, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const favorites = getFavorites();
+            const index = favorites.indexOf(serviceName);
+
+            if (index === -1) {
+                favorites.push(serviceName);
+                playSound('favorite');
+            } else {
+                favorites.splice(index, 1);
+            }
+
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            renderServicesByCategory(window.currentCategory || config.categories[0]?.name);
+        }
+
+        function isFavorite(serviceName) {
+            return getFavorites().includes(serviceName);
+        }
+
+        // Search and filter
+        function filterServices() {
+            const searchTerm = document.getElementById('search-box')?.value.toLowerCase() || '';
+            const favoritesOnly = document.getElementById('favorites-only')?.checked || false;
+            const grid = document.getElementById('services-grid');
+            const cards = grid.querySelectorAll('.service-card');
+
+            cards.forEach(card => {
+                const serviceName = card.querySelector('.service-title')?.textContent.toLowerCase() || '';
+                const serviceUrl = card.querySelector('.service-url')?.textContent.toLowerCase() || '';
+                const serviceDesc = card.querySelector('.service-description')?.textContent.toLowerCase() || '';
+
+                const matchesSearch = !searchTerm ||
+                    serviceName.includes(searchTerm) ||
+                    serviceUrl.includes(searchTerm) ||
+                    serviceDesc.includes(searchTerm);
+
+                const matchesFavorites = !favoritesOnly || card.querySelector('.favorited');
+
+                card.style.display = (matchesSearch && matchesFavorites) ? '' : 'none';
+            });
+        }
+
+        // Settings panel
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.classList.toggle('open');
+            playSound('click');
+        }
+
+        // Sound effects
+        let soundEnabled = localStorage.getItem('soundEnabled') === 'true';
+        const sounds = {
+            click: () => playTone(800, 0.1, 0.05),
+            favorite: () => playTone(1200, 0.2, 0.1),
+            success: () => playTone(1000, 0.3, 0.15),
+            error: () => playTone(400, 0.3, 0.15)
+        };
+
+        function playTone(frequency, duration, volume) {
+            if (!soundEnabled) return;
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                gainNode.gain.value = volume;
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log('Sound playback not supported');
+            }
+        }
+
+        function playSound(soundName) {
+            if (sounds[soundName]) sounds[soundName]();
+        }
+
+        function toggleSound() {
+            soundEnabled = document.getElementById('sound-enabled').checked;
+            localStorage.setItem('soundEnabled', soundEnabled);
+            if (soundEnabled) playSound('click');
+        }
+
+        // Background particles
+        function initParticles() {
+            const container = document.getElementById('bg-particles');
+            if (!container) return;
+
+            container.innerHTML = '';
+            const particlesEnabled = document.getElementById('particles-enabled')?.checked !== false;
+
+            if (!particlesEnabled) return;
+
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = Math.random() * 4 + 2 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function toggleParticles() {
+            initParticles();
+        }
+
+        // Animations toggle
+        function toggleAnimations() {
+            const enabled = document.getElementById('animations-enabled').checked;
+            document.documentElement.style.setProperty('--animation-enabled', enabled ? '1' : '0');
+            if (!enabled) {
+                document.querySelectorAll('.service-card').forEach(card => {
+                    card.style.animation = 'none';
+                });
+            }
+        }
+
+        // Color themes
+        const colorThemes = {
+            default: {
+                professional: '#667eea',
+                system: '#fc8181',
+                external: '#48bb78',
+                family: '#ed8936'
+            },
+            vibrant: {
+                professional: '#e01e5a',
+                system: '#2eb67d',
+                external: '#ecb22e',
+                family: '#36c5f0'
+            },
+            pastel: {
+                professional: '#b4a7d6',
+                system: '#f4a5a5',
+                external: '#a8e6cf',
+                family: '#ffd3b6'
+            },
+            monochrome: {
+                professional: '#4a5568',
+                system: '#718096',
+                external: '#a0aec0',
+                family: '#cbd5e0'
+            }
+        };
+
+        function applyColorTheme() {
+            const theme = document.getElementById('color-theme')?.value || 'default';
+            const colors = colorThemes[theme];
+
+            Object.keys(colors).forEach(category => {
+                document.documentElement.style.setProperty(`--color-${category}`, colors[category]);
+            });
+
+            localStorage.setItem('colorTheme', theme);
+        }
+
+        // Easter eggs (excluding System and Professional per user request)
+        const easterEggs = {
+            'konami': {
+                code: ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'],
+                message: '🎮 Konami Code Activated! You found the secret!',
+                action: () => {
+                    document.body.style.transform = 'rotate(360deg)';
+                    document.body.style.transition = 'transform 2s';
+                    setTimeout(() => {
+                        document.body.style.transform = '';
+                    }, 2000);
+                }
+            },
+            'click10': {
+                message: '🎉 You clicked the logo 10 times! Here\'s a cookie: 🍪',
+                requireClicks: 10
+            }
+        };
+
+        let konamiIndex = 0;
+        let logoClicks = 0;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === easterEggs.konami.code[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === easterEggs.konami.code.length) {
+                    showEasterEgg(easterEggs.konami.message);
+                    easterEggs.konami.action();
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
+            }
+        });
+
+        function setupEasterEggs() {
+            const logo = document.querySelector('header h1');
+            if (logo) {
+                logo.style.cursor = 'pointer';
+                logo.addEventListener('click', () => {
+                    // Skip easter eggs for System and Professional categories
+                    const currentCat = window.currentCategory?.toLowerCase();
+                    if (currentCat === 'system' || currentCat === 'professional') return;
+
+                    logoClicks++;
+                    if (logoClicks >= easterEggs.click10.requireClicks) {
+                        showEasterEgg(easterEggs.click10.message);
+                        logoClicks = 0;
+                    }
+                });
+            }
+        }
+
+        function showEasterEgg(message) {
+            const container = document.getElementById('easter-egg');
+            container.innerHTML = `<p>${message}</p><button onclick="hideEasterEgg()">Close</button>`;
+            container.classList.add('show');
+            playSound('success');
+            setTimeout(hideEasterEgg, 5000);
+        }
+
+        function hideEasterEgg() {
+            document.getElementById('easter-egg').classList.remove('show');
+        }
+
         // Initialize - check authentication first
         checkAuthStatus();
+
+        // Initialize UI/UX features
+        initParticles();
+        setupEasterEggs();
+
+        // Load saved preferences
+        const savedTheme = localStorage.getItem('colorTheme');
+        if (savedTheme) {
+            const themeSelect = document.getElementById('color-theme');
+            if (themeSelect) {
+                themeSelect.value = savedTheme;
+                applyColorTheme();
+            }
+        }
+
+        const savedSound = localStorage.getItem('soundEnabled') === 'true';
+        if (savedSound && document.getElementById('sound-enabled')) {
+            document.getElementById('sound-enabled').checked = true;
+        }
 
         // Auto-refresh
         const autoRefreshMinutes = 5;
