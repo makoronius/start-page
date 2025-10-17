@@ -15,7 +15,9 @@
       "Bash(docker exec:*)",
       "Bash(md5sum:*)",
       "Bash(git reset:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(ssh mark@hypervisor:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []

@@ -26,7 +26,7 @@ app.config['SESSION_COOKIE_SECURE'] = False  # Set to True when using HTTPS
 app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
 app.config['SESSION_COOKIE_PATH'] = '/'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = False  # Don't regenerate on each request
-CORS(app, supports_credentials=True, origins=['http://hypervisor'], allow_headers=['Content-Type'], expose_headers=['Set-Cookie'])
+CORS(app, supports_credentials=True, origins=['*'], allow_headers=['Content-Type'], expose_headers=['Set-Cookie'])
 
 # Rate limiting setup
 # Custom key function to exempt localhost from rate limiting
