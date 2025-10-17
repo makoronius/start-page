@@ -19,12 +19,14 @@ from auth import (
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)  # Infinite sessions
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)  # Long-lived sessions
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True when using HTTPS
 app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
-CORS(app, supports_credentials=True)
+app.config['SESSION_COOKIE_PATH'] = '/'
+app.config['SESSION_REFRESH_EACH_REQUEST'] = False  # Don't regenerate on each request
+CORS(app, supports_credentials=True, origins=['http://hypervisor'], allow_headers=['Content-Type'], expose_headers=['Set-Cookie'])
 
 # Rate limiting setup
 # Custom key function to exempt localhost from rate limiting
@@ -836,4 +838,4 @@ if __name__ == '__main__':
     print("- Audit logging: enabled")
     print("- Session token validation: enabled")
     print("- Input sanitization: enabled")
-    app.run(host='0.0.0.0', port=5555, debug=True)
+    app.run(host='0.0.0.0', port=5555, debug=False)

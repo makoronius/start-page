@@ -33,6 +33,13 @@ RUN echo 'server { \n\
         root /usr/share/nginx/html; \n\
         index index.html; \n\
         try_files $uri $uri/ =404; \n\
+        \n\
+        # FORCE browsers to always fetch fresh HTML - no caching \n\
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"; \n\
+        add_header Pragma "no-cache"; \n\
+        add_header Expires "0"; \n\
+        if_modified_since off; \n\
+        etag off; \n\
     } \n\
     \n\
     location /api/ { \n\
