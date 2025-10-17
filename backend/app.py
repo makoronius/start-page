@@ -23,6 +23,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)  # Long-lived ses
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True when using HTTPS
+app.config['SESSION_COOKIE_DOMAIN'] = None  # Allow any domain
 app.config['SESSION_COOKIE_NAME'] = 'start-page-session'
 app.config['SESSION_COOKIE_PATH'] = '/'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = False  # Don't regenerate on each request
