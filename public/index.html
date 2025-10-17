@@ -1545,9 +1545,28 @@
                     <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">Manage services within each category. Drag and drop to reorder.</p>
                     <div id="services-by-category"></div>
 
+                    <h3 style="margin-bottom: 1rem; margin-top: 2rem;">📊 CSV Export</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">Configure CSV generation for port mapping scripts.</p>
+
+                    <div style="background: var(--input-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label for="csv-remote-path">Remote Server Path</label>
+                            <input type="text" id="csv-remote-path" placeholder="/mnt/c/Scripts" style="font-family: 'Courier New', monospace;">
+                        </div>
+                        <div class="form-group">
+                            <label for="csv-filename">CSV Filename</label>
+                            <input type="text" id="csv-filename" placeholder="port-mappings.csv" style="font-family: 'Courier New', monospace;">
+                        </div>
+                        <div class="form-group">
+                            <label for="csv-backup-path">Backup Directory</label>
+                            <input type="text" id="csv-backup-path" placeholder="/mnt/c/Scripts/backups" style="font-family: 'Courier New', monospace;">
+                        </div>
+                    </div>
+
                     <div style="margin-top: 2rem;">
                         <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
-                        <button class="btn btn-secondary" onclick="generateCSV()">📄 Generate CSV to Server</button>
+                        <button class="btn btn-secondary" onclick="generateCSV()">📤 Generate CSV to Server</button>
+                        <button class="btn btn-secondary" onclick="downloadCSV()">💾 Download CSV</button>
                     </div>
                 </div>
 
@@ -2554,6 +2573,7 @@
                             if (state.currentTab === 'config' && config) {
                                 renderSettingsEditor();
                                 renderCategoriesEditor();
+                                renderCSVSettings();
                                 renderServicesByCategory_Config();
 
                                 // Restore config sub-tab
@@ -2611,6 +2631,7 @@
             if (tabName === 'config' && config) {
                 renderSettingsEditor();
                 renderCategoriesEditor();
+                renderCSVSettings();
                 renderServicesByCategory_Config();
             }
 
@@ -2937,6 +2958,40 @@
                 config.settings = {};
             }
             config.settings[key] = value;
+        }
+
+        // Render CSV settings in Systems tab
+        function renderCSVSettings() {
+            if (!config.settings) {
+                config.settings = {};
+            }
+
+            const settings = config.settings;
+            const csvPath = settings.csv_path || '/mnt/c/Scripts/port-mappings.csv';
+            const parts = csvPath.split('/');
+            const filename = parts.pop();
+            const directory = parts.join('/') || '/';
+
+            document.getElementById('csv-remote-path').value = directory;
+            document.getElementById('csv-filename').value = filename;
+            document.getElementById('csv-backup-path').value = settings.backup_path || '/mnt/c/Scripts/backups';
+        }
+
+        // Update CSV settings from inputs
+        function updateCSVSettings() {
+            const directory = document.getElementById('csv-remote-path').value.trim();
+            const filename = document.getElementById('csv-filename').value.trim();
+            const backupPath = document.getElementById('csv-backup-path').value.trim();
+
+            if (!config.settings) {
+                config.settings = {};
+            }
+
+            // Combine directory and filename
+            config.settings.csv_path = directory.endsWith('/')
+                ? directory + filename
+                : directory + '/' + filename;
+            config.settings.backup_path = backupPath;
         }
 
         // Render categories editor
@@ -3311,6 +3366,9 @@
             const messageDiv = document.getElementById('config-message');
 
             try {
+                // Update CSV settings from inputs before saving
+                updateCSVSettings();
+
                 const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: {
@@ -3331,6 +3389,7 @@
                 try {
                     renderSettingsEditor();
                     renderCategoriesEditor();
+                    renderCSVSettings();
                     renderServicesByCategory_Config();
 
                     // Update category tabs in main view
@@ -3357,6 +3416,9 @@
         // Generate CSV to server
         async function generateCSV() {
             try {
+                // Update CSV settings from inputs before generating
+                updateCSVSettings();
+
                 const response = await fetch('/api/csv/generate', {
                     method: 'POST',
                     credentials: 'include'
@@ -3378,6 +3440,21 @@
             } catch (error) {
                 console.error('Error generating CSV:', error);
                 showToast(`Failed to generate CSV: ${error.message}`, 'error');
+            }
+        }
+
+        // Download CSV file
+        async function downloadCSV() {
+            try {
+                playSound('click');
+
+                // Open download URL in new window
+                window.open('/api/csv/download', '_blank');
+
+                showToast('CSV download started', 'success');
+            } catch (error) {
+                console.error('Error downloading CSV:', error);
+                showToast(`Failed to download CSV: ${error.message}`, 'error');
             }
         }
 
