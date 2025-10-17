@@ -2837,7 +2837,13 @@
             });
 
             if (favorites.length === 0) {
-                grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No favorites yet. Click the ⭐ icon on any service to add it to your favorites!</p>';
+                grid.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--text-primary); opacity: 0.7;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">⭐</div>
+                        <div style="font-size: 1.2rem; font-weight: 500; margin-bottom: 0.5rem;">No favorites yet</div>
+                        <div style="font-size: 0.95rem; color: var(--text-secondary);">Click the ⭐ icon on any service to add it to your favorites!</div>
+                    </div>
+                `;
                 return;
             }
 
