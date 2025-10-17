@@ -1118,24 +1118,20 @@
         }
 
         /* Category Color Variants */
-        .category-professional {
-            --category-color: var(--color-professional, #667eea);
+        .category-professional .service-icon {
+            background: linear-gradient(135deg, var(--color-professional, #667eea) 0%, color-mix(in srgb, var(--color-professional, #667eea) 70%, black) 100%) !important;
         }
-        .category-system {
-            --category-color: var(--color-system, #fc8181);
+        .category-system .service-icon {
+            background: linear-gradient(135deg, var(--color-system, #fc8181) 0%, color-mix(in srgb, var(--color-system, #fc8181) 70%, black) 100%) !important;
         }
-        .category-external {
-            --category-color: var(--color-external, #48bb78);
+        .category-external .service-icon {
+            background: linear-gradient(135deg, var(--color-external, #48bb78) 0%, color-mix(in srgb, var(--color-external, #48bb78) 70%, black) 100%) !important;
         }
-        .category-family {
-            --category-color: var(--color-family, #ed8936);
+        .category-family .service-icon {
+            background: linear-gradient(135deg, var(--color-family, #ed8936) 0%, color-mix(in srgb, var(--color-family, #ed8936) 70%, black) 100%) !important;
         }
-        .category-default {
-            --category-color: var(--color-professional, #667eea);
-        }
-
-        [data-category] .service-icon {
-            background: linear-gradient(135deg, var(--category-color) 0%, color-mix(in srgb, var(--category-color) 70%, black) 100%);
+        .category-default .service-icon {
+            background: linear-gradient(135deg, var(--color-professional, #667eea) 0%, color-mix(in srgb, var(--color-professional, #667eea) 70%, black) 100%) !important;
         }
 
         /* Dynamic Background Particles */
@@ -3351,8 +3347,7 @@
 
             localStorage.setItem('colorTheme', theme);
 
-            // Show visual feedback
-            showNotification(`Theme changed to: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+            console.log('Theme saved to localStorage:', theme);
         }
 
         // Easter eggs (excluding System and Professional per user request)
