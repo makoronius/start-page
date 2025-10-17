@@ -79,35 +79,34 @@
 
         .theme-switcher {
             position: absolute;
-            top: 0;
+            top: 0.5rem;
             right: 0;
             display: flex;
-            gap: 0.5rem;
-            background: var(--bg-card);
-            padding: 0.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px var(--shadow);
+            gap: 0.3rem;
             z-index: 10;
         }
 
         .theme-btn {
-            padding: 0.5rem 1rem;
-            border: none;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
-            background: var(--input-bg);
-            color: var(--text-primary);
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-header);
             transition: all 0.2s;
+            backdrop-filter: blur(10px);
         }
 
         .theme-btn.active {
-            background: var(--button-bg);
-            color: var(--button-text);
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            font-weight: 600;
         }
 
         .theme-btn:hover {
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
 
         .tabs {
@@ -2628,6 +2627,47 @@
             saveState();
         }
 
+        // Create a single service card element
+        function createServiceCard(service) {
+            const card = document.createElement('a');
+            card.href = service.url;
+            card.className = 'service-card';
+            card.target = '_blank';
+            card.style.position = 'relative';
+
+            // Add category color class
+            const catClass = service.category.toLowerCase().replace(/\s+/g, '-');
+            card.setAttribute('data-category', catClass);
+            card.classList.add(`category-${catClass}`);
+
+            const faviconUrl = getFaviconUrl(service.url);
+            const iconContent = service.icon || '🔧';
+
+            // Try to load favicon, fall back to emoji if it fails
+            let iconHtml = iconContent;
+            if (faviconUrl) {
+                iconHtml = `<img src="${faviconUrl}" alt="${service.name}" onerror="this.parentElement.innerHTML='${iconContent}'" />`;
+            }
+
+            // Favorite star (use category-name as unique ID)
+            const favoriteId = `${service.category}-${service.name}`;
+            const isFav = isFavorite(favoriteId);
+            const starClass = isFav ? 'favorited' : '';
+
+            card.innerHTML = `
+                <span class="favorite-star ${starClass}" onclick="toggleFavorite('${favoriteId}', event)">${isFav ? '⭐' : '☆'}</span>
+                <div class="service-icon">${iconHtml}</div>
+                <div class="service-header">
+                    <div class="service-title">${service.name}</div>
+                    <span class="service-status status-${service.status || 'running'}">${service.status || 'Running'}</span>
+                </div>
+                <div class="service-url">${service.url}</div>
+                <div class="service-description">${service.description || ''}</div>
+            `;
+
+            return card;
+        }
+
         function renderFavouritesServices() {
             const grid = document.getElementById('favourites-services-grid');
             grid.innerHTML = '';
@@ -2692,42 +2732,9 @@
                 return;
             }
 
+            // Render each service using the shared createServiceCard function
             categoryServices.forEach(service => {
-                const card = document.createElement('a');
-                card.href = service.url;
-                card.className = 'service-card';
-                card.target = '_blank';
-                card.style.position = 'relative';
-
-                // Add category color class
-                const catClass = categoryName.toLowerCase().replace(/\s+/g, '-');
-                card.setAttribute('data-category', catClass);
-                card.classList.add(`category-${catClass}`);
-
-                const faviconUrl = getFaviconUrl(service.url);
-                const iconContent = service.icon || '🔧';
-
-                // Try to load favicon, fall back to emoji if it fails
-                let iconHtml = iconContent;
-                if (faviconUrl) {
-                    iconHtml = `<img src="${faviconUrl}" alt="${service.name}" onerror="this.parentElement.innerHTML='${iconContent}'" />`;
-                }
-
-                // Favorite star
-                const isFav = isFavorite(service.name);
-                const starClass = isFav ? 'favorited' : '';
-
-                card.innerHTML = `
-                    <span class="favorite-star ${starClass}" onclick="toggleFavorite('${service.name}', event)">${isFav ? '⭐' : '☆'}</span>
-                    <div class="service-icon">${iconHtml}</div>
-                    <div class="service-header">
-                        <div class="service-title">${service.name}</div>
-                        <span class="service-status status-${service.status || 'running'}">${service.status || 'Running'}</span>
-                    </div>
-                    <div class="service-url">${service.url}</div>
-                    <div class="service-description">${service.description || ''}</div>
-                `;
-
+                const card = createServiceCard(service);
                 grid.appendChild(card);
             });
         }
@@ -3852,7 +3859,15 @@
             }
 
             localStorage.setItem('favorites', JSON.stringify(favorites));
-            renderServicesByCategory(window.currentCategory || config.categories[0]?.name);
+
+            // Re-render current view
+            if (document.getElementById('favourites-tab-btn')?.classList.contains('active')) {
+                // If favourites tab is active, re-render it
+                renderFavouritesServices();
+            } else if (window.currentCategory) {
+                // Otherwise re-render the current category
+                renderServicesByCategory(window.currentCategory);
+            }
         }
 
         function isFavorite(serviceName) {
