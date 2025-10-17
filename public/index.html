@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Version: 2025-10-17-color-themes-debug -->
     <title>Local Services Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚀</text></svg>">
     <style>
@@ -3338,11 +3342,17 @@
             const theme = document.getElementById('color-theme')?.value || 'default';
             const colors = colorThemes[theme];
 
+            console.log('Applying color theme:', theme, colors);
+
             Object.keys(colors).forEach(category => {
                 document.documentElement.style.setProperty(`--color-${category}`, colors[category]);
+                console.log(`Set --color-${category} to ${colors[category]}`);
             });
 
             localStorage.setItem('colorTheme', theme);
+
+            // Show visual feedback
+            showNotification(`Theme changed to: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
         }
 
         // Easter eggs (excluding System and Professional per user request)
