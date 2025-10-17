@@ -1520,7 +1520,7 @@
                 <!-- Config Sub-tabs -->
                 <div class="sub-tabs">
                     <button class="sub-tab-btn active" onclick="switchConfigTab('general')">General Settings</button>
-                    <button class="sub-tab-btn" onclick="switchConfigTab('services')">Services</button>
+                    <button class="sub-tab-btn" onclick="switchConfigTab('services')">Systems</button>
                     <button class="sub-tab-btn" onclick="switchConfigTab('users')">Users & Access</button>
                 </div>
 
@@ -1534,13 +1534,15 @@
                     </div>
                 </div>
 
-                <!-- Services Sub-tab -->
+                <!-- Systems Sub-tab (Categories & Services) -->
                 <div id="services-subtab" class="sub-tab-content">
-                    <h3 style="margin-bottom: 1rem;">Categories</h3>
+                    <h3 style="margin-bottom: 1rem;">📁 Categories</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">Organize your services into categories. Services can be assigned to categories below.</p>
                     <div id="categories-editor"></div>
                     <button class="btn btn-primary" onclick="addCategory()" style="margin-top: 1rem;">+ Add New Category</button>
 
-                    <h3 style="margin-bottom: 1rem; margin-top: 2rem;">Services</h3>
+                    <h3 style="margin-bottom: 1rem; margin-top: 2rem;">🔧 Services</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">Manage services within each category. Drag and drop to reorder.</p>
                     <div id="services-by-category"></div>
 
                     <div style="margin-top: 2rem;">
@@ -4288,63 +4290,133 @@
                     ambientOscillators.push({ stop: () => clearInterval(chirpInterval) });
 
                 } else if (type === 'cafe') {
-                    // Cafe: realistic coffee shop ambience
-                    // Background chatter (mid-frequency noise)
+                    // Cafe: layered realistic coffee shop ambience
+
+                    // 1. Low-frequency background rumble (general ambience)
+                    const ambience = createWhiteNoise();
+                    const ambienceFilter = audioContext.createBiquadFilter();
+                    ambienceFilter.type = 'lowpass';
+                    ambienceFilter.frequency.value = 300;
+                    const ambienceGain = audioContext.createGain();
+                    ambienceGain.gain.value = 0.15;
+
+                    ambience.connect(ambienceFilter);
+                    ambienceFilter.connect(ambienceGain);
+                    ambienceGain.connect(ambientMasterGain);
+                    ambience.start(0);
+                    ambientOscillators.push(ambience);
+
+                    // 2. Mid-frequency chatter (voices)
                     const chatter = createWhiteNoise();
                     const chatterFilter = audioContext.createBiquadFilter();
                     chatterFilter.type = 'bandpass';
-                    chatterFilter.frequency.value = 800;
-                    chatterFilter.Q.value = 1;
+                    chatterFilter.frequency.value = 1200;
+                    chatterFilter.Q.value = 1.5;
                     const chatterGain = audioContext.createGain();
-                    chatterGain.gain.value = 0.3;
+                    chatterGain.gain.value = 0.2;
+
+                    // Add LFO to chatter for natural variation
+                    const chatterLFO = audioContext.createOscillator();
+                    chatterLFO.frequency.value = 0.3;
+                    const chatterLFOGain = audioContext.createGain();
+                    chatterLFOGain.gain.value = 0.05;
+                    chatterLFO.connect(chatterLFOGain);
+                    chatterLFOGain.connect(chatterGain.gain);
 
                     chatter.connect(chatterFilter);
                     chatterFilter.connect(chatterGain);
                     chatterGain.connect(ambientMasterGain);
                     chatter.start(0);
-                    ambientOscillators.push(chatter);
+                    chatterLFO.start(0);
+                    ambientOscillators.push(chatter, chatterLFO);
 
-                    // Espresso machine hum (low frequency)
-                    const machine = audioContext.createOscillator();
-                    machine.type = 'sawtooth';
-                    machine.frequency.value = 60;
-                    const machineGain = audioContext.createGain();
-                    machineGain.gain.value = 0.02;
+                    // 3. Espresso machine - multi-layered
+                    // Machine motor hum
+                    const machineHum = audioContext.createOscillator();
+                    machineHum.type = 'sawtooth';
+                    machineHum.frequency.value = 120;
+                    const machineHumGain = audioContext.createGain();
+                    machineHumGain.gain.value = 0.015;
 
-                    machine.connect(machineGain);
-                    machineGain.connect(ambientMasterGain);
-                    machine.start(0);
-                    ambientOscillators.push(machine);
+                    machineHum.connect(machineHumGain);
+                    machineHumGain.connect(ambientMasterGain);
+                    machineHum.start(0);
+                    ambientOscillators.push(machineHum);
 
-                    // Random clinks and clatter
+                    // Machine pump pulse
+                    const machinePump = audioContext.createOscillator();
+                    machinePump.type = 'square';
+                    machinePump.frequency.value = 4;
+                    const machinePumpGain = audioContext.createGain();
+                    machinePumpGain.gain.value = 0.01;
+
+                    machinePump.connect(machinePumpGain);
+                    machinePumpGain.connect(machineHumGain.gain);
+                    machinePump.start(0);
+                    ambientOscillators.push(machinePump);
+
+                    // 4. Steam hissing (occasional)
+                    function createSteamHiss() {
+                        const steam = createWhiteNoise();
+                        const steamFilter = audioContext.createBiquadFilter();
+                        steamFilter.type = 'highpass';
+                        steamFilter.frequency.value = 4000;
+                        const steamGain = audioContext.createGain();
+
+                        const now = audioContext.currentTime;
+                        steamGain.gain.setValueAtTime(0, now);
+                        steamGain.gain.linearRampToValueAtTime(0.15, now + 0.2);
+                        steamGain.gain.linearRampToValueAtTime(0.15, now + 1.5);
+                        steamGain.gain.exponentialRampToValueAtTime(0.01, now + 2);
+
+                        steam.connect(steamFilter);
+                        steamFilter.connect(steamGain);
+                        steamGain.connect(ambientMasterGain);
+                        steam.start(now);
+                        steam.stop(now + 2.1);
+                    }
+
+                    const steamInterval = setInterval(() => {
+                        if (ambientOscillators.length > 0 && Math.random() > 0.7) {
+                            createSteamHiss();
+                        }
+                    }, 8000 + Math.random() * 7000);
+                    ambientOscillators.push({ stop: () => clearInterval(steamInterval) });
+
+                    // 5. Cups and dishes clinks
                     function createClink() {
                         const clinkGain = audioContext.createGain();
                         const clinkFilter = audioContext.createBiquadFilter();
-                        clinkFilter.type = 'highpass';
-                        clinkFilter.frequency.value = 2000;
+                        clinkFilter.type = 'bandpass';
+                        clinkFilter.frequency.value = 3500;
+                        clinkFilter.Q.value = 5;
 
                         const oscillator = audioContext.createOscillator();
-                        oscillator.type = 'triangle';
+                        oscillator.type = 'sine';
                         oscillator.frequency.value = 3000 + Math.random() * 2000;
 
                         const now = audioContext.currentTime;
                         clinkGain.gain.setValueAtTime(0, now);
-                        clinkGain.gain.linearRampToValueAtTime(0.1, now + 0.005);
-                        clinkGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                        clinkGain.gain.linearRampToValueAtTime(0.12, now + 0.003);
+                        clinkGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
 
                         oscillator.connect(clinkFilter);
                         clinkFilter.connect(clinkGain);
                         clinkGain.connect(ambientMasterGain);
 
                         oscillator.start(now);
-                        oscillator.stop(now + 0.1);
+                        oscillator.stop(now + 0.15);
                     }
 
                     const clinkInterval = setInterval(() => {
-                        if (ambientOscillators.length > 0 && Math.random() > 0.6) {
+                        if (ambientOscillators.length > 0 && Math.random() > 0.5) {
                             createClink();
+                            // Sometimes multiple clinks in succession
+                            if (Math.random() > 0.6) {
+                                setTimeout(createClink, 100 + Math.random() * 300);
+                            }
                         }
-                    }, 2000 + Math.random() * 3000);
+                    }, 3000 + Math.random() * 4000);
                     ambientOscillators.push({ stop: () => clearInterval(clinkInterval) });
 
                 } else if (type === 'fireplace') {
