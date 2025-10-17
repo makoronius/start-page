@@ -2,8 +2,6 @@
 
 A beautiful, feature-rich dashboard for managing and accessing your local development services with role-based access control, customizable themes, and immersive ambient sounds.
 
-![Dashboard Preview](docs/screenshot.png)
-
 ## ✨ Features
 
 ### 🎨 Visual & UX
@@ -54,7 +52,7 @@ A beautiful, feature-rich dashboard for managing and accessing your local develo
 
 1. **Clone the repository**:
    ```bash
-   git clone <your-repo-url> /opt/start-page
+   git clone https://github.com/makoronius/start-page.git /opt/start-page
    cd /opt/start-page
    ```
 
