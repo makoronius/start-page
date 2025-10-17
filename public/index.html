@@ -658,8 +658,8 @@
         }
 
         .btn-danger {
-            background: #f56565;
-            color: white;
+            background: var(--danger-bg, #f56565);
+            color: var(--danger-text, white);
         }
 
         .btn:hover {
@@ -1308,17 +1308,30 @@
             box-shadow: 0 0 12px rgba(138,43,226,0.5);
         }
 
-        .particle.snow {
-            background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(200,220,255,0.6));
-            animation: snow 15s infinite;
+        .particle.winter {
+            background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(200,220,255,0.7));
+            animation: winter-fall 15s infinite;
+            border-radius: 50%;
         }
 
         .particle.spring {
-            background: radial-gradient(circle, rgba(255,182,193,0.6), rgba(144,238,144,0.5));
+            background: radial-gradient(circle, rgba(255,182,193,0.7), rgba(144,238,144,0.6));
+            animation: spring-float 12s infinite;
+            border-radius: 50%;
+        }
+
+        .particle.summer {
+            background: radial-gradient(circle, rgba(255,215,0,0.8), rgba(255,165,0,0.6), rgba(255,100,50,0.4));
+            animation: summer-wave 10s infinite;
+            border-radius: 40% 60% 50% 50%;
+            box-shadow: 0 0 15px rgba(255,200,0,0.5);
         }
 
         .particle.autumn {
-            background: radial-gradient(circle, rgba(255,165,0,0.6), rgba(255,99,71,0.5));
+            background: radial-gradient(circle, rgba(255,140,0,0.7), rgba(205,92,92,0.6));
+            animation: autumn-fall 14s infinite;
+            border-radius: 0% 50% 50% 50%;
+            transform: rotate(45deg);
         }
 
         @keyframes float {
@@ -1328,11 +1341,31 @@
             75% { transform: translateY(-30px) translateX(10px) rotate(270deg); }
         }
 
-        @keyframes snow {
+        @keyframes winter-fall {
             0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
             100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes spring-float {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-40px) translateX(25px) rotate(90deg) scale(1.1); }
+            50% { transform: translateY(-80px) translateX(-25px) rotate(180deg) scale(0.9); }
+            75% { transform: translateY(-40px) translateX(15px) rotate(270deg) scale(1.05); }
+        }
+
+        @keyframes summer-wave {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); border-radius: 40% 60% 50% 50%; }
+            25% { transform: translateY(-50px) translateX(30px) rotate(45deg) scale(1.2); border-radius: 60% 40% 60% 40%; }
+            50% { transform: translateY(-30px) translateX(-30px) rotate(90deg) scale(0.9); border-radius: 50% 50% 40% 60%; }
+            75% { transform: translateY(-70px) translateX(20px) rotate(135deg) scale(1.1); border-radius: 40% 60% 50% 50%; }
+        }
+
+        @keyframes autumn-fall {
+            0% { transform: translateY(-20px) translateX(0) rotate(45deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(100vh) translateX(100px) rotate(405deg); opacity: 0.5; }
         }
 
         /* Emoji Picker */
@@ -1792,16 +1825,24 @@
             </div>
 
             <div class="form-group">
-                <label for="particle-mode">Particle Animation Mode</label>
-                <select id="particle-mode" onchange="changeParticleMode(this.value)">
-                    <option value="auto">Automatic (Time & Season)</option>
+                <label for="particle-time">Time of Day</label>
+                <select id="particle-time" onchange="changeParticleTime(this.value)">
+                    <option value="auto">Automatic</option>
                     <option value="morning">Morning</option>
                     <option value="afternoon">Afternoon</option>
                     <option value="evening">Evening</option>
                     <option value="night">Night</option>
-                    <option value="snow">Snow (Winter)</option>
-                    <option value="spring">Spring</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="particle-season">Season</label>
+                <select id="particle-season" onchange="changeParticleSeason(this.value)">
+                    <option value="auto">Automatic</option>
+                    <option value="summer">Summer</option>
                     <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                    <option value="spring">Spring</option>
                 </select>
             </div>
 
@@ -1977,7 +2018,9 @@
                     'color-professional': '#667eea',
                     'color-system': '#fc8181',
                     'color-external': '#48bb78',
-                    'color-family': '#ed8936'
+                    'color-family': '#ed8936',
+                    'danger-bg': '#f56565',
+                    'danger-text': '#ffffff'
                 },
                 dark: {
                     'bg-primary': 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)',
@@ -1992,7 +2035,9 @@
                     'color-professional': '#8b7fd3',
                     'color-system': '#fc8181',
                     'color-external': '#68d391',
-                    'color-family': '#ed8936'
+                    'color-family': '#ed8936',
+                    'danger-bg': '#e53e3e',
+                    'danger-text': '#ffffff'
                 }
             },
             vibrant: {
@@ -2009,7 +2054,9 @@
                     'color-professional': '#e01e5a',
                     'color-system': '#2eb67d',
                     'color-external': '#ecb22e',
-                    'color-family': '#36c5f0'
+                    'color-family': '#36c5f0',
+                    'danger-bg': '#f56565',
+                    'danger-text': '#ffffff'
                 },
                 dark: {
                     'bg-primary': 'linear-gradient(135deg, #2d1625 0%, #3d2533 100%)',
@@ -2024,7 +2071,9 @@
                     'color-professional': '#ff6b9d',
                     'color-system': '#3ec993',
                     'color-external': '#f5d042',
-                    'color-family': '#4dd4f7'
+                    'color-family': '#4dd4f7',
+                    'danger-bg': '#e53e3e',
+                    'danger-text': '#ffffff'
                 }
             },
             pastel: {
@@ -2041,7 +2090,9 @@
                     'color-professional': '#b4a7d6',
                     'color-system': '#f4a5a5',
                     'color-external': '#a8e6cf',
-                    'color-family': '#ffd3b6'
+                    'color-family': '#ffd3b6',
+                    'danger-bg': '#f56565',
+                    'danger-text': '#ffffff'
                 },
                 dark: {
                     'bg-primary': 'linear-gradient(135deg, #2e2640 0%, #3d2e2e 100%)',
@@ -2056,7 +2107,9 @@
                     'color-professional': '#c4b5e6',
                     'color-system': '#f4a5a5',
                     'color-external': '#b8f0d9',
-                    'color-family': '#ffe3c6'
+                    'color-family': '#ffe3c6',
+                    'danger-bg': '#e53e3e',
+                    'danger-text': '#ffffff'
                 }
             },
             monochrome: {
@@ -2073,7 +2126,9 @@
                     'color-professional': '#4a5568',
                     'color-system': '#718096',
                     'color-external': '#a0aec0',
-                    'color-family': '#cbd5e0'
+                    'color-family': '#cbd5e0',
+                    'danger-bg': '#f56565',
+                    'danger-text': '#ffffff'
                 },
                 dark: {
                     'bg-primary': 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)',
@@ -2088,7 +2143,9 @@
                     'color-professional': '#64748b',
                     'color-system': '#94a3b8',
                     'color-external': '#cbd5e0',
-                    'color-family': '#e2e8f0'
+                    'color-family': '#e2e8f0',
+                    'danger-bg': '#e53e3e',
+                    'danger-text': '#ffffff'
                 }
             }
         };
@@ -4080,9 +4137,14 @@
         let ambientVolume = parseFloat(localStorage.getItem('ambientVolume') || '15') / 100;
 
         function stopAmbientSound() {
-            ambientOscillators.forEach(osc => {
+            ambientOscillators.forEach(item => {
                 try {
-                    osc.stop();
+                    if (item && typeof item.stop === 'function') {
+                        item.stop();
+                    }
+                    if (item && typeof item.disconnect === 'function') {
+                        item.disconnect();
+                    }
                 } catch(e) {}
             });
             ambientOscillators = [];
@@ -4164,43 +4226,126 @@
                     ambientNoiseNode = noise;
 
                 } else if (type === 'forest') {
-                    // Forest: chirping birds with varying frequencies
-                    const noise = createWhiteNoise();
-                    const filter = audioContext.createBiquadFilter();
-                    filter.type = 'bandpass';
-                    filter.frequency.value = 3000;
-                    filter.Q.value = 2;
+                    // Forest: realistic bird chirping with multiple birds
+                    // Background ambience
+                    const ambientNoise = createWhiteNoise();
+                    const ambientFilter = audioContext.createBiquadFilter();
+                    ambientFilter.type = 'highpass';
+                    ambientFilter.frequency.value = 500;
+                    const ambientGain = audioContext.createGain();
+                    ambientGain.gain.value = 0.05;
 
-                    // Add a slow LFO to modulate the filter for bird-like chirping
-                    const lfo = audioContext.createOscillator();
-                    lfo.frequency.value = 0.5;
-                    const lfoGain = audioContext.createGain();
-                    lfoGain.gain.value = 1000;
+                    ambientNoise.connect(ambientFilter);
+                    ambientFilter.connect(ambientGain);
+                    ambientGain.connect(ambientMasterGain);
+                    ambientNoise.start(0);
+                    ambientOscillators.push(ambientNoise);
 
-                    lfo.connect(lfoGain);
-                    lfoGain.connect(filter.frequency);
+                    // Create chirping birds with random intervals
+                    function createBirdChirp() {
+                        const chirpGain = audioContext.createGain();
+                        const chirpFilter = audioContext.createBiquadFilter();
+                        chirpFilter.type = 'bandpass';
+                        chirpFilter.Q.value = 10;
 
-                    noise.connect(filter);
-                    filter.connect(ambientMasterGain);
+                        // Random bird frequencies (2000-5000 Hz)
+                        const baseFreq = 2000 + Math.random() * 3000;
+                        chirpFilter.frequency.value = baseFreq;
 
-                    noise.start(0);
-                    lfo.start(0);
-                    ambientOscillators.push(noise, lfo);
-                    ambientNoiseNode = noise;
+                        const oscillator = audioContext.createOscillator();
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = baseFreq;
+
+                        // Chirp envelope: quick attack, quick decay
+                        const now = audioContext.currentTime;
+                        chirpGain.gain.setValueAtTime(0, now);
+                        chirpGain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+                        chirpGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+                        // Frequency sweep for chirp effect
+                        oscillator.frequency.setValueAtTime(baseFreq, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.05);
+                        oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 0.8, now + 0.15);
+
+                        oscillator.connect(chirpFilter);
+                        chirpFilter.connect(chirpGain);
+                        chirpGain.connect(ambientMasterGain);
+
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.2);
+                    }
+
+                    // Chirp at random intervals
+                    const chirpInterval = setInterval(() => {
+                        if (ambientOscillators.length > 0) {
+                            createBirdChirp();
+                            // Sometimes double chirp
+                            if (Math.random() > 0.7) {
+                                setTimeout(createBirdChirp, 200 + Math.random() * 300);
+                            }
+                        }
+                    }, 1000 + Math.random() * 2000);
+                    ambientOscillators.push({ stop: () => clearInterval(chirpInterval) });
 
                 } else if (type === 'cafe') {
-                    // Cafe: mid-range filtered noise
-                    const noise = createWhiteNoise();
-                    const filter = audioContext.createBiquadFilter();
-                    filter.type = 'bandpass';
-                    filter.frequency.value = 500;
-                    filter.Q.value = 1;
+                    // Cafe: realistic coffee shop ambience
+                    // Background chatter (mid-frequency noise)
+                    const chatter = createWhiteNoise();
+                    const chatterFilter = audioContext.createBiquadFilter();
+                    chatterFilter.type = 'bandpass';
+                    chatterFilter.frequency.value = 800;
+                    chatterFilter.Q.value = 1;
+                    const chatterGain = audioContext.createGain();
+                    chatterGain.gain.value = 0.3;
 
-                    noise.connect(filter);
-                    filter.connect(ambientMasterGain);
-                    noise.start(0);
-                    ambientOscillators.push(noise);
-                    ambientNoiseNode = noise;
+                    chatter.connect(chatterFilter);
+                    chatterFilter.connect(chatterGain);
+                    chatterGain.connect(ambientMasterGain);
+                    chatter.start(0);
+                    ambientOscillators.push(chatter);
+
+                    // Espresso machine hum (low frequency)
+                    const machine = audioContext.createOscillator();
+                    machine.type = 'sawtooth';
+                    machine.frequency.value = 60;
+                    const machineGain = audioContext.createGain();
+                    machineGain.gain.value = 0.02;
+
+                    machine.connect(machineGain);
+                    machineGain.connect(ambientMasterGain);
+                    machine.start(0);
+                    ambientOscillators.push(machine);
+
+                    // Random clinks and clatter
+                    function createClink() {
+                        const clinkGain = audioContext.createGain();
+                        const clinkFilter = audioContext.createBiquadFilter();
+                        clinkFilter.type = 'highpass';
+                        clinkFilter.frequency.value = 2000;
+
+                        const oscillator = audioContext.createOscillator();
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.value = 3000 + Math.random() * 2000;
+
+                        const now = audioContext.currentTime;
+                        clinkGain.gain.setValueAtTime(0, now);
+                        clinkGain.gain.linearRampToValueAtTime(0.1, now + 0.005);
+                        clinkGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+                        oscillator.connect(clinkFilter);
+                        clinkFilter.connect(clinkGain);
+                        clinkGain.connect(ambientMasterGain);
+
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.1);
+                    }
+
+                    const clinkInterval = setInterval(() => {
+                        if (ambientOscillators.length > 0 && Math.random() > 0.6) {
+                            createClink();
+                        }
+                    }, 2000 + Math.random() * 3000);
+                    ambientOscillators.push({ stop: () => clearInterval(clinkInterval) });
 
                 } else if (type === 'fireplace') {
                     // Fireplace: low rumble with crackles
@@ -4236,8 +4381,13 @@
             }
         }
 
-        function changeParticleMode(mode) {
-            localStorage.setItem('particleMode', mode);
+        function changeParticleTime(time) {
+            localStorage.setItem('particleTime', time);
+            initParticles();
+        }
+
+        function changeParticleSeason(season) {
+            localStorage.setItem('particleSeason', season);
             initParticles();
         }
 
@@ -4316,53 +4466,91 @@
 
             if (!particlesEnabled) return;
 
-            // Check if manual mode is selected
-            const particleMode = localStorage.getItem('particleMode') || 'auto';
+            const now = new Date();
+            const hour = now.getHours();
+            const month = now.getMonth(); // 0-11
 
+            // Get time of day setting
+            const particleTime = localStorage.getItem('particleTime') || 'auto';
             let timeClass = 'afternoon';
-            let seasonClass = '';
 
-            if (particleMode === 'auto') {
-                // Automatic mode - determine by time and season
-                const now = new Date();
-                const hour = now.getHours();
-                const month = now.getMonth(); // 0-11
-
-                // Determine time of day
+            if (particleTime === 'auto') {
+                // Automatic - determine by current time
                 if (hour >= 5 && hour < 9) timeClass = 'morning';
                 else if (hour >= 9 && hour < 17) timeClass = 'afternoon';
                 else if (hour >= 17 && hour < 21) timeClass = 'evening';
                 else timeClass = 'night';
-
-                // Determine season
-                if (month >= 11 || month <= 1) seasonClass = 'snow'; // Winter
-                else if (month >= 2 && month <= 4) seasonClass = 'spring'; // Spring
-                else if (month >= 8 && month <= 10) seasonClass = 'autumn'; // Autumn
             } else {
-                // Manual mode - use selected mode
-                if (['morning', 'afternoon', 'evening', 'night'].includes(particleMode)) {
-                    timeClass = particleMode;
-                } else if (['snow', 'spring', 'autumn'].includes(particleMode)) {
-                    seasonClass = particleMode;
-                }
+                timeClass = particleTime;
             }
 
-            // More particles at night and during winter
-            const particleCount = (timeClass === 'night' ? 60 : 50) + (seasonClass === 'snow' ? 20 : 0);
+            // Get season setting
+            const particleSeason = localStorage.getItem('particleSeason') || 'auto';
+            let seasonClass = '';
+
+            if (particleSeason === 'auto') {
+                // Automatic - determine by current month
+                if (month >= 11 || month <= 1) seasonClass = 'winter'; // Winter
+                else if (month >= 2 && month <= 4) seasonClass = 'spring'; // Spring
+                else if (month >= 5 && month <= 7) seasonClass = 'summer'; // Summer
+                else if (month >= 8 && month <= 10) seasonClass = 'autumn'; // Autumn
+            } else {
+                seasonClass = particleSeason;
+            }
+
+            // Time of day affects particle count and intensity
+            let baseCount = 40;
+            let intensityMultiplier = 1.0;
+
+            if (timeClass === 'morning') {
+                baseCount = 45;
+                intensityMultiplier = 1.2;
+            } else if (timeClass === 'afternoon') {
+                baseCount = 40;
+                intensityMultiplier = 1.0;
+            } else if (timeClass === 'evening') {
+                baseCount = 50;
+                intensityMultiplier = 1.3;
+            } else if (timeClass === 'night') {
+                baseCount = 60;
+                intensityMultiplier = 1.5;
+            }
+
+            // Season affects additional particles
+            let seasonBonus = 0;
+            if (seasonClass === 'winter') seasonBonus = 30;
+            else if (seasonClass === 'summer') seasonBonus = 20;
+            else if (seasonClass === 'spring') seasonBonus = 10;
+            else if (seasonClass === 'autumn') seasonBonus = 15;
+
+            const particleCount = baseCount + seasonBonus;
 
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = `particle ${timeClass} ${seasonClass}`;
 
-                // Larger particles for winter snow effect
-                const size = seasonClass === 'snow' ? Math.random() * 6 + 3 : Math.random() * 5 + 2;
+                // Size varies by season
+                let size;
+                if (seasonClass === 'winter') size = Math.random() * 6 + 3; // Snow
+                else if (seasonClass === 'summer') size = Math.random() * 8 + 4; // Sun splashes
+                else if (seasonClass === 'autumn') size = Math.random() * 10 + 5; // Leaves
+                else size = Math.random() * 4 + 2; // Spring sparkles
+
                 particle.style.width = size + 'px';
                 particle.style.height = size + 'px';
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.top = Math.random() * 100 + '%';
 
-                // Faster animations for more active feel
-                const duration = seasonClass === 'snow' ? Math.random() * 8 + 12 : Math.random() * 8 + 10;
+                // Animation duration varies by season and time
+                let duration;
+                if (seasonClass === 'winter') duration = Math.random() * 10 + 15; // Slow falling
+                else if (seasonClass === 'summer') duration = Math.random() * 6 + 8; // Medium wave
+                else if (seasonClass === 'autumn') duration = Math.random() * 8 + 12; // Gentle fall
+                else duration = Math.random() * 8 + 10; // Spring float
+
+                // Apply time intensity to speed
+                duration = duration / intensityMultiplier;
+
                 particle.style.animationDuration = duration + 's';
                 particle.style.animationDelay = Math.random() * 5 + 's';
 
@@ -4517,22 +4705,12 @@
                 const ambientSelect = document.getElementById('ambient-sound');
                 if (ambientSelect) {
                     ambientSelect.value = savedAmbient;
-                    // Resume ambient sound on first user interaction (required by browser autoplay policies)
+                    // Start ambient sound immediately
                     if (savedAmbient !== 'none') {
-                        const resumeAudio = () => {
+                        setTimeout(() => {
                             initAudioContext();
-                            if (audioContext && audioContext.state === 'suspended') {
-                                audioContext.resume().then(() => {
-                                    playAmbientSound(savedAmbient);
-                                });
-                            } else {
-                                playAmbientSound(savedAmbient);
-                            }
-                            document.removeEventListener('click', resumeAudio);
-                            document.removeEventListener('keydown', resumeAudio);
-                        };
-                        document.addEventListener('click', resumeAudio, { once: true });
-                        document.addEventListener('keydown', resumeAudio, { once: true });
+                            playAmbientSound(savedAmbient);
+                        }, 500);
                     }
                 }
 
@@ -4545,11 +4723,18 @@
                     volumeDisplay.textContent = savedVolume + '%';
                 }
 
-                // Initialize particle mode
-                const savedParticleMode = localStorage.getItem('particleMode') || 'auto';
-                const particleModeSelect = document.getElementById('particle-mode');
-                if (particleModeSelect) {
-                    particleModeSelect.value = savedParticleMode;
+                // Initialize particle time of day
+                const savedParticleTime = localStorage.getItem('particleTime') || 'auto';
+                const particleTimeSelect = document.getElementById('particle-time');
+                if (particleTimeSelect) {
+                    particleTimeSelect.value = savedParticleTime;
+                }
+
+                // Initialize particle season
+                const savedParticleSeason = localStorage.getItem('particleSeason') || 'auto';
+                const particleSeasonSelect = document.getElementById('particle-season');
+                if (particleSeasonSelect) {
+                    particleSeasonSelect.value = savedParticleSeason;
                 }
 
                 // Initialize favourites tab visibility
