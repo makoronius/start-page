@@ -4517,9 +4517,22 @@
                 const ambientSelect = document.getElementById('ambient-sound');
                 if (ambientSelect) {
                     ambientSelect.value = savedAmbient;
-                    // Auto-play ambient sound after a short delay to allow user interaction first
+                    // Resume ambient sound on first user interaction (required by browser autoplay policies)
                     if (savedAmbient !== 'none') {
-                        setTimeout(() => playAmbientSound(savedAmbient), 1000);
+                        const resumeAudio = () => {
+                            initAudioContext();
+                            if (audioContext && audioContext.state === 'suspended') {
+                                audioContext.resume().then(() => {
+                                    playAmbientSound(savedAmbient);
+                                });
+                            } else {
+                                playAmbientSound(savedAmbient);
+                            }
+                            document.removeEventListener('click', resumeAudio);
+                            document.removeEventListener('keydown', resumeAudio);
+                        };
+                        document.addEventListener('click', resumeAudio, { once: true });
+                        document.addEventListener('keydown', resumeAudio, { once: true });
                     }
                 }
 
