@@ -19,7 +19,9 @@
       "Bash(ssh mark@hypervisor:*)",
       "Bash(git merge:*)",
       "Bash(git fetch:*)",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(git branch:*)",
+      "Bash(docker restart:*)"
     ],
     "deny": [],
     "ask": []

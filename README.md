@@ -33,7 +33,7 @@ A beautiful, feature-rich dashboard for managing and accessing your local develo
 - **Web-Based Config**: No file editing required
 - **Systems Management**: Organize categories and services
 - **CSV Export**: Generate port mapping files with configurable paths
-- **Folder Browser**: Browse and select export directories (coming soon)
+- **Folder Browser**: Browse and select directories on server with visual navigation
 - **CSV Download**: Download generated CSV directly from browser
 - **Backup/Restore**: Configuration backup system with configurable paths
 - **Live Reload**: Changes apply immediately
@@ -324,9 +324,16 @@ The dashboard can generate CSV files for port mapping scripts:
 2. Configure paths:
    - **CSV Path**: Full path including filename (e.g., `/mnt/c/scripts/port-mappings.csv`)
    - **Backup Directory**: Where to store CSV backups (e.g., `/mnt/c/scripts/backups`)
-3. Use the **📁 Browse** buttons to select directories (feature coming soon)
+3. Use the **📁 Browse** buttons to navigate and select directories on the server
 4. Click **Generate CSV to Server** to create the file on the server
 5. Click **📥 Download CSV** to download directly to your browser
+
+The folder browser provides:
+- Visual directory navigation
+- Parent directory navigation
+- Permission checking (locked folders shown but not accessible)
+- Refresh functionality
+- Path selection with automatic filename preservation
 
 ### Favorites
 
@@ -394,6 +401,42 @@ ports:
 - Firewall rule creation
 - Port proxy management
 - CSV-based configuration
+
+## 🚀 Planned Features
+
+The following features are planned for future releases:
+
+### 🎨 Enhanced UI/UX
+- **Dashboard Widgets**: Customizable dashboard widgets (system stats, quick links, notes)
+- **Unique Color Schemes per Category**: Each category can have its own color theme
+- **Custom Service Card Designs**: More card layouts and design options
+- **Easter Eggs**: Hidden games and surprises (excludable for professional categories)
+
+### 🔐 Advanced Security
+- **Session Token Refresh**: Automatic session invalidation on role/password changes
+- **Audit Logging Enhancement**: Track all user launches and session activities
+- **IP Whitelisting**: Optional IP-based access control (localhost always allowed for admins)
+- **HTTPS/TLS Support**: Optional TLS configuration for secure connections
+
+### 🎯 Productivity Features
+- **Advanced Search**: Global search across all services with filters
+- **Service Groups**: Create custom service groupings beyond categories
+- **Quick Actions**: Keyboard shortcuts and command palette
+- **Service Health Monitoring**: Automatic service availability checking
+
+### 🎨 Visual Enhancements
+- **More Ambient Sounds**: Additional soundscapes (Thunderstorm, City, Library, etc.)
+- **More Particle Effects**: Additional seasonal and time-based animations
+- **Custom Backgrounds**: Upload custom background images per category
+- **Icon Packs**: Alternative icon sets for services
+
+### 📊 Analytics & Monitoring
+- **Usage Analytics**: Track most-used services and access patterns
+- **Service Status Dashboard**: Real-time status monitoring for local services
+- **Alert System**: Notifications for service downtime or issues
+- **Activity Reports**: Generate usage and access reports
+
+Have feature requests? Please [open an issue](https://github.com/makoronius/start-page/issues) on GitHub!
 
 ## 🤝 Contributing
 

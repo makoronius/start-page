@@ -945,6 +945,46 @@
             background: var(--border-color);
         }
 
+        /* Folder browser styles */
+        .folder-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .folder-item:hover {
+            background: var(--border-color);
+            transform: translateX(4px);
+        }
+
+        .folder-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .folder-item.disabled:hover {
+            transform: none;
+        }
+
+        .folder-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .folder-name {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
         .profile-info {
             margin-bottom: 2rem;
             padding: 1rem;
@@ -1735,6 +1775,40 @@
             <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                 <button class="btn btn-primary" onclick="saveService()">Save Service</button>
                 <button class="btn btn-secondary" onclick="closeServiceModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Folder Browser Modal -->
+    <div id="folder-browser-modal" class="modal-overlay hidden" onclick="closeFolderBrowser(event)">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 700px; max-height: 80vh;">
+            <button class="modal-close" onclick="closeFolderBrowser()">&times;</button>
+            <h2>Browse Folders</h2>
+
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--input-bg); border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; color: var(--text-primary); overflow-x: auto;">
+                    <span id="browser-current-path">/</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <button class="btn btn-secondary" onclick="navigateToParent()" id="browser-parent-btn" style="margin-right: 0.5rem;">
+                    ⬆️ Parent Directory
+                </button>
+                <button class="btn btn-secondary" onclick="refreshBrowser()">
+                    🔄 Refresh
+                </button>
+            </div>
+
+            <div id="folder-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--input-bg); border-radius: 4px; padding: 0.5rem;">
+                <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                    Loading...
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="selectCurrentFolder()">Select This Folder</button>
+                <button class="btn btn-secondary" onclick="closeFolderBrowser()">Cancel</button>
             </div>
         </div>
     </div>
@@ -3466,14 +3540,132 @@
         }
 
         // Browse folders on server
-        function browseFolders(inputId) {
+        // Folder Browser
+        let currentBrowserPath = '/';
+        let currentBrowserInputId = null;
+
+        async function browseFolders(inputId) {
             playSound('click');
-            showToast('Folder browser coming soon! Please enter path manually for now.', 'info', 3000);
-            // TODO: Implement server-side folder browser with modal
-            // This would require:
-            // 1. Backend API endpoint to list directories
-            // 2. Modal UI with folder tree/list
-            // 3. Selection and navigation logic
+            currentBrowserInputId = inputId;
+
+            // Get the current value from the input to use as starting path
+            const input = document.getElementById(inputId);
+            let startPath = input.value.trim();
+
+            // If it's a full path with filename, extract directory
+            if (startPath && !startPath.endsWith('/')) {
+                startPath = startPath.substring(0, startPath.lastIndexOf('/'));
+            }
+
+            currentBrowserPath = startPath || '/';
+
+            // Show modal
+            document.getElementById('folder-browser-modal').classList.remove('hidden');
+
+            // Load initial directory
+            await loadDirectory(currentBrowserPath);
+        }
+
+        async function loadDirectory(path) {
+            const folderList = document.getElementById('folder-list');
+            folderList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/browse-folders', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to load directory');
+                }
+
+                const data = await response.json();
+                currentBrowserPath = data.current_path;
+
+                // Update path display
+                document.getElementById('browser-current-path').textContent = currentBrowserPath;
+
+                // Enable/disable parent button
+                const parentBtn = document.getElementById('browser-parent-btn');
+                if (data.parent_path) {
+                    parentBtn.disabled = false;
+                    parentBtn.style.opacity = '1';
+                } else {
+                    parentBtn.disabled = true;
+                    parentBtn.style.opacity = '0.5';
+                }
+
+                // Render directory list
+                if (data.directories.length === 0) {
+                    folderList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">No subdirectories found</div>';
+                } else {
+                    folderList.innerHTML = '';
+                    data.directories.forEach(dir => {
+                        const folderItem = document.createElement('div');
+                        folderItem.className = 'folder-item' + (dir.accessible ? '' : ' disabled');
+                        folderItem.innerHTML = `
+                            <div class="folder-icon">📁</div>
+                            <div class="folder-name">${dir.name}</div>
+                            ${!dir.accessible ? '<div style="color: var(--text-secondary); font-size: 0.85rem;">🔒 No access</div>' : ''}
+                        `;
+
+                        if (dir.accessible) {
+                            folderItem.onclick = () => navigateToFolder(dir.path);
+                        }
+
+                        folderList.appendChild(folderItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading directory:', error);
+                folderList.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--danger-text);">${error.message}</div>`;
+            }
+        }
+
+        async function navigateToFolder(path) {
+            playSound('click');
+            await loadDirectory(path);
+        }
+
+        async function navigateToParent() {
+            playSound('click');
+            const parentPath = currentBrowserPath.substring(0, currentBrowserPath.lastIndexOf('/'));
+            await loadDirectory(parentPath || '/');
+        }
+
+        async function refreshBrowser() {
+            playSound('click');
+            await loadDirectory(currentBrowserPath);
+        }
+
+        function selectCurrentFolder() {
+            playSound('click');
+            if (currentBrowserInputId) {
+                const input = document.getElementById(currentBrowserInputId);
+
+                // If the input expects a full path with filename, just set the directory
+                // The user can append the filename afterward
+                if (input.value.includes('.')) {
+                    // Extract filename from current value
+                    const filename = input.value.substring(input.value.lastIndexOf('/') + 1);
+                    input.value = currentBrowserPath + '/' + filename;
+                } else {
+                    // Just set the directory
+                    input.value = currentBrowserPath;
+                }
+            }
+            closeFolderBrowser();
+        }
+
+        function closeFolderBrowser(event) {
+            if (event && event.target !== event.currentTarget) return;
+            playSound('click');
+            document.getElementById('folder-browser-modal').classList.add('hidden');
+            currentBrowserInputId = null;
         }
 
         // User Management

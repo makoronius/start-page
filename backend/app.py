@@ -560,6 +560,62 @@ def get_csv_content():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/browse-folders', methods=['POST'])
+@admin_required
+def browse_folders():
+    """Browse folders on the server (admin only)"""
+    try:
+        data = request.get_json()
+        path = data.get('path', '/')
+
+        # Security: Normalize and validate path
+        path = os.path.abspath(path)
+
+        # Check if path exists
+        if not os.path.exists(path):
+            return jsonify({"error": "Path does not exist"}), 404
+
+        # Check if path is a directory
+        if not os.path.isdir(path):
+            # If it's a file, return its parent directory
+            path = os.path.dirname(path)
+
+        try:
+            # List all directories in the path
+            items = []
+            for item in sorted(os.listdir(path)):
+                item_path = os.path.join(path, item)
+                if os.path.isdir(item_path):
+                    try:
+                        # Check if we can access the directory
+                        os.listdir(item_path)
+                        items.append({
+                            'name': item,
+                            'path': item_path,
+                            'accessible': True
+                        })
+                    except PermissionError:
+                        items.append({
+                            'name': item,
+                            'path': item_path,
+                            'accessible': False
+                        })
+
+            # Get parent directory
+            parent = os.path.dirname(path) if path != os.path.dirname(path) else None
+
+            return jsonify({
+                'current_path': path,
+                'parent_path': parent,
+                'directories': items
+            }), 200
+
+        except PermissionError:
+            return jsonify({"error": "Permission denied to access this directory"}), 403
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/settings', methods=['GET'])
 @login_required
 def get_settings():
