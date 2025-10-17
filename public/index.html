@@ -1165,7 +1165,7 @@
 </head>
 <body>
     <!-- Login Page -->
-    <div id="login-page" class="container hidden">
+    <div id="login-page" class="container">
         <header>
             <div class="theme-switcher">
                 <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
@@ -3400,31 +3400,47 @@
             document.getElementById('easter-egg').classList.remove('show');
         }
 
-        // Initialize - check authentication first
-        checkAuthStatus();
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize - check authentication first
+            checkAuthStatus();
 
-        // Initialize UI/UX features
-        initParticles();
-        setupEasterEggs();
-
-        // Load saved preferences
-        const savedTheme = localStorage.getItem('colorTheme');
-        if (savedTheme) {
-            const themeSelect = document.getElementById('color-theme');
-            if (themeSelect) {
-                themeSelect.value = savedTheme;
-                applyColorTheme();
+            // Initialize UI/UX features
+            try {
+                initParticles();
+            } catch (e) {
+                console.log('Particles initialization failed:', e);
             }
-        }
 
-        const savedSound = localStorage.getItem('soundEnabled') === 'true';
-        if (savedSound && document.getElementById('sound-enabled')) {
-            document.getElementById('sound-enabled').checked = true;
-        }
+            try {
+                setupEasterEggs();
+            } catch (e) {
+                console.log('Easter eggs setup failed:', e);
+            }
 
-        // Auto-refresh
-        const autoRefreshMinutes = 5;
-        setTimeout(() => location.reload(), autoRefreshMinutes * 60 * 1000);
+            // Load saved preferences
+            try {
+                const savedTheme = localStorage.getItem('colorTheme');
+                if (savedTheme) {
+                    const themeSelect = document.getElementById('color-theme');
+                    if (themeSelect) {
+                        themeSelect.value = savedTheme;
+                        applyColorTheme();
+                    }
+                }
+
+                const savedSound = localStorage.getItem('soundEnabled') === 'true';
+                if (savedSound && document.getElementById('sound-enabled')) {
+                    document.getElementById('sound-enabled').checked = true;
+                }
+            } catch (e) {
+                console.log('Preference loading failed:', e);
+            }
+
+            // Auto-refresh
+            const autoRefreshMinutes = 5;
+            setTimeout(() => location.reload(), autoRefreshMinutes * 60 * 1000);
+        });
     </script>
 </body>
 </html>
