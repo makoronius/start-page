@@ -1550,16 +1550,18 @@
 
                     <div style="background: var(--input-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;">
                         <div class="form-group">
-                            <label for="csv-remote-path">Remote Server Path</label>
-                            <input type="text" id="csv-remote-path" placeholder="/mnt/c/Scripts" style="font-family: 'Courier New', monospace;">
-                        </div>
-                        <div class="form-group">
-                            <label for="csv-filename">CSV Filename</label>
-                            <input type="text" id="csv-filename" placeholder="port-mappings.csv" style="font-family: 'Courier New', monospace;">
+                            <label for="csv-path">CSV Path (Full path including filename)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="csv-path" placeholder="/mnt/c/scripts/port-mappings.csv" style="font-family: 'Courier New', monospace; flex: 1;">
+                                <button type="button" class="btn btn-secondary" onclick="browseFolders('csv-path')" style="padding: 0.5rem 1rem; white-space: nowrap;">📁 Browse</button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="csv-backup-path">Backup Directory</label>
-                            <input type="text" id="csv-backup-path" placeholder="/mnt/c/Scripts/backups" style="font-family: 'Courier New', monospace;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="csv-backup-path" placeholder="/mnt/c/scripts/backups" style="font-family: 'Courier New', monospace; flex: 1;">
+                                <button type="button" class="btn btn-secondary" onclick="browseFolders('csv-backup-path')" style="padding: 0.5rem 1rem; white-space: nowrap;">📁 Browse</button>
+                            </div>
                         </div>
                     </div>
 
@@ -2973,30 +2975,23 @@
             }
 
             const settings = config.settings;
-            const csvPath = settings.csv_path || '/mnt/c/Scripts/port-mappings.csv';
-            const parts = csvPath.split('/');
-            const filename = parts.pop();
-            const directory = parts.join('/') || '/';
+            const csvPath = settings.csv_path || '/mnt/c/scripts/port-mappings.csv';
+            const backupPath = settings.backup_path || '/mnt/c/scripts/backups';
 
-            document.getElementById('csv-remote-path').value = directory;
-            document.getElementById('csv-filename').value = filename;
-            document.getElementById('csv-backup-path').value = settings.backup_path || '/mnt/c/Scripts/backups';
+            document.getElementById('csv-path').value = csvPath;
+            document.getElementById('csv-backup-path').value = backupPath;
         }
 
         // Update CSV settings from inputs
         function updateCSVSettings() {
-            const directory = document.getElementById('csv-remote-path').value.trim();
-            const filename = document.getElementById('csv-filename').value.trim();
+            const csvPath = document.getElementById('csv-path').value.trim();
             const backupPath = document.getElementById('csv-backup-path').value.trim();
 
             if (!config.settings) {
                 config.settings = {};
             }
 
-            // Combine directory and filename
-            config.settings.csv_path = directory.endsWith('/')
-                ? directory + filename
-                : directory + '/' + filename;
+            config.settings.csv_path = csvPath;
             config.settings.backup_path = backupPath;
         }
 
@@ -3462,6 +3457,17 @@
                 console.error('Error downloading CSV:', error);
                 showToast(`Failed to download CSV: ${error.message}`, 'error');
             }
+        }
+
+        // Browse folders on server
+        function browseFolders(inputId) {
+            playSound('click');
+            showToast('Folder browser coming soon! Please enter path manually for now.', 'info', 3000);
+            // TODO: Implement server-side folder browser with modal
+            // This would require:
+            // 1. Backend API endpoint to list directories
+            // 2. Modal UI with folder tree/list
+            // 3. Selection and navigation logic
         }
 
         // User Management
