@@ -3306,79 +3306,36 @@
             }
         }
 
-        // Comprehensive color themes - affects entire page
+        // Color themes - affects background gradient, buttons, and service icons
+        // (Dark/Light mode controls card colors, text, shadows, borders)
         const colorThemes = {
             default: {
-                // Page colors
                 'bg-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'bg-card': '#ffffff',
-                'text-primary': '#333333',
-                'text-secondary': '#718096',
-                'text-header': '#ffffff',
-                'shadow': 'rgba(0, 0, 0, 0.1)',
-                'shadow-hover': 'rgba(0, 0, 0, 0.15)',
-                'border-color': '#e2e8f0',
-                'input-bg': '#f7fafc',
                 'button-bg': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'button-text': '#ffffff',
-                // Category icon colors
                 'color-professional': '#667eea',
                 'color-system': '#fc8181',
                 'color-external': '#48bb78',
                 'color-family': '#ed8936'
             },
             vibrant: {
-                // Page colors - Bold and energetic
                 'bg-primary': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
-                'bg-card': '#ffffff',
-                'text-primary': '#1a1a1a',
-                'text-secondary': '#666666',
-                'text-header': '#ffffff',
-                'shadow': 'rgba(224, 30, 90, 0.15)',
-                'shadow-hover': 'rgba(224, 30, 90, 0.25)',
-                'border-color': '#ffe0e8',
-                'input-bg': '#fff5f7',
                 'button-bg': 'linear-gradient(135deg, #e01e5a 0%, #ff6b9d 100%)',
-                'button-text': '#ffffff',
-                // Category icon colors
                 'color-professional': '#e01e5a',
                 'color-system': '#2eb67d',
                 'color-external': '#ecb22e',
                 'color-family': '#36c5f0'
             },
             pastel: {
-                // Page colors - Soft and calming
                 'bg-primary': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
-                'bg-card': '#ffffff',
-                'text-primary': '#4a4a4a',
-                'text-secondary': '#8b8b8b',
-                'text-header': '#ffffff',
-                'shadow': 'rgba(180, 167, 214, 0.2)',
-                'shadow-hover': 'rgba(180, 167, 214, 0.3)',
-                'border-color': '#f0e8f5',
-                'input-bg': '#faf8fc',
                 'button-bg': 'linear-gradient(135deg, #b4a7d6 0%, #d4a5a5 100%)',
-                'button-text': '#ffffff',
-                // Category icon colors
                 'color-professional': '#b4a7d6',
                 'color-system': '#f4a5a5',
                 'color-external': '#a8e6cf',
                 'color-family': '#ffd3b6'
             },
             monochrome: {
-                // Page colors - Professional and clean
                 'bg-primary': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
-                'bg-card': '#ffffff',
-                'text-primary': '#2d3748',
-                'text-secondary': '#718096',
-                'text-header': '#ffffff',
-                'shadow': 'rgba(74, 85, 104, 0.15)',
-                'shadow-hover': 'rgba(74, 85, 104, 0.25)',
-                'border-color': '#e2e8f0',
-                'input-bg': '#f7fafc',
                 'button-bg': 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)',
-                'button-text': '#ffffff',
-                // Category icon colors
                 'color-professional': '#4a5568',
                 'color-system': '#718096',
                 'color-external': '#a0aec0',
@@ -3390,9 +3347,9 @@
             const theme = document.getElementById('color-theme')?.value || 'default';
             const colors = colorThemes[theme];
 
-            console.log('Applying comprehensive color theme:', theme);
+            console.log('Applying color theme:', theme);
 
-            // Apply all theme variables to the root element
+            // Apply only theme-specific colors (not dark/light mode colors)
             Object.keys(colors).forEach(varName => {
                 document.documentElement.style.setProperty(`--${varName}`, colors[varName]);
                 console.log(`Set --${varName} to ${colors[varName]}`);
