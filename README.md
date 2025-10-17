@@ -2,6 +2,8 @@
 
 A beautiful, feature-rich dashboard for managing and accessing your local development services with role-based access control, customizable themes, and immersive ambient sounds.
 
+![Dashboard Preview](docs/screenshot.gif)
+
 ## ✨ Features
 
 ### 🎨 Visual & UX
@@ -30,8 +32,10 @@ A beautiful, feature-rich dashboard for managing and accessing your local develo
 ### ⚙️ Configuration
 - **Web-Based Config**: No file editing required
 - **Systems Management**: Organize categories and services
-- **CSV Export**: Generate port mapping files
-- **Backup/Restore**: Configuration backup system
+- **CSV Export**: Generate port mapping files with configurable paths
+- **Folder Browser**: Browse and select export directories (coming soon)
+- **CSV Download**: Download generated CSV directly from browser
+- **Backup/Restore**: Configuration backup system with configurable paths
 - **Live Reload**: Changes apply immediately
 
 ### 🎵 Customization
@@ -107,6 +111,8 @@ settings:
   title: "Local Services Dashboard"
   subtitle: "Your development environment at a glance"
   auto_refresh_minutes: 5
+  csv_path: /mnt/c/scripts/port-mappings.csv  # Full path for CSV export
+  backup_path: /mnt/c/scripts/backups         # CSV backup directory
   grid_columns: auto  # auto, 1, 2, 3, or 4
 
 categories:
@@ -188,19 +194,23 @@ Users can only see services in categories assigned to their roles. Admins can:
 
 ### Particle Animations
 
-**Time of Day** (affects intensity and count):
+**Two Independent Controls**:
+
+**Time of Day** (affects particle color, intensity and count):
+- **Automatic**: Changes based on your local time
 - **Morning**: Golden particles, 45 count, 1.2x intensity
 - **Afternoon**: Sky blue, 40 count, 1.0x intensity
 - **Evening**: Sunset colors, 50 count, 1.3x intensity
 - **Night**: Deep purple, 60 count, 1.5x intensity
 
-**Season** (affects visual style):
+**Season** (affects visual style and animation):
+- **Automatic**: Changes based on current date
 - **Summer**: Sun splashes with wave animation
 - **Autumn**: Falling leaves
 - **Winter**: Gentle snowfall
 - **Spring**: Floating sparkles
 
-Both can be set to **Automatic** or manual selection.
+Both selectors work independently, allowing you to mix and match (e.g., Night + Summer, or Afternoon + Winter).
 
 ### Ambient Sounds
 
@@ -213,8 +223,9 @@ Both can be set to **Automatic** or manual selection.
 
 **Features**:
 - Volume control slider
-- Auto-starts on page load
+- Auto-starts immediately on page load (no click required)
 - Persists across sessions
+- Realistic multi-layered sound generation using Web Audio API
 
 ## 🐳 Docker Deployment
 
@@ -303,6 +314,19 @@ services:
 1. Navigate to **Config > Users & Access**
 2. Create users and assign roles
 3. Define role permissions by category access
+4. Edit user profile information (first name, last name, email)
+
+### CSV Export Configuration
+
+The dashboard can generate CSV files for port mapping scripts:
+
+1. Navigate to **Config > Systems** and scroll to **CSV Export**
+2. Configure paths:
+   - **CSV Path**: Full path including filename (e.g., `/mnt/c/scripts/port-mappings.csv`)
+   - **Backup Directory**: Where to store CSV backups (e.g., `/mnt/c/scripts/backups`)
+3. Use the **📁 Browse** buttons to select directories (feature coming soon)
+4. Click **Generate CSV to Server** to create the file on the server
+5. Click **📥 Download CSV** to download directly to your browser
 
 ### Favorites
 

@@ -2333,6 +2333,12 @@
 
                 // Update header with new name
                 updateHeaderName(first_name);
+
+                // Refresh users list if currently viewing Config > Users & Access
+                const usersSubtab = document.getElementById('users-subtab');
+                if (usersSubtab && usersSubtab.classList.contains('active')) {
+                    await loadUsers();
+                }
             } catch (error) {
                 console.error('Error updating profile:', error);
                 showToast(`Failed to update profile: ${error.message}`, 'error');
@@ -3503,9 +3509,11 @@
             users.forEach(user => {
                 const card = document.createElement('div');
                 card.className = 'user-card';
+                const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
                 card.innerHTML = `
                     <div class="user-info">
                         <div class="user-name">${user.username}</div>
+                        ${fullName ? `<div class="user-email" style="font-weight: 500;">${fullName}</div>` : ''}
                         ${user.email ? `<div class="user-email">${user.email}</div>` : ''}
                         <div class="user-roles">
                             ${user.roles.map(role => `<span class="role-badge">${role}</span>`).join('')}

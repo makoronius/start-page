@@ -598,6 +598,8 @@ def get_users():
         {
             'username': u['username'],
             'email': u.get('email', ''),
+            'first_name': u.get('first_name', ''),
+            'last_name': u.get('last_name', ''),
             'roles': u.get('roles', [])
         }
         for u in users_data.get('users', [])
