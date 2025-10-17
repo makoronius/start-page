@@ -292,11 +292,47 @@ def get_profile():
         return jsonify({
             'username': user['username'],
             'email': user.get('email', ''),
+            'first_name': user.get('first_name', ''),
+            'last_name': user.get('last_name', ''),
             'roles': user['roles'],
             'is_local': user.get('is_local', False)
         }), 200
     else:
         return jsonify({"error": "Not authenticated"}), 401
+
+@app.route('/api/auth/profile', methods=['POST'])
+@login_required
+def update_profile():
+    """Update user profile (first_name, last_name, email)"""
+    user = get_current_user()
+    if not user or user.get('is_local'):
+        return jsonify({"error": "Cannot update local user profile"}), 403
+
+    data = request.get_json()
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    email = data.get('email', '').strip()
+
+    # Load users
+    users_data = load_users()
+
+    # Find and update user
+    for u in users_data.get('users', []):
+        if u['username'] == user['username']:
+            if first_name:
+                u['first_name'] = first_name
+            if last_name:
+                u['last_name'] = last_name
+            if email:
+                u['email'] = email
+
+            if save_users(users_data):
+                audit_log('profile_update', user['username'], {'first_name': first_name, 'last_name': last_name, 'email': email})
+                return jsonify({"message": "Profile updated successfully"}), 200
+            else:
+                return jsonify({"error": "Failed to save profile"}), 500
+
+    return jsonify({"error": "User not found"}), 404
 
 @app.route('/api/config', methods=['GET'])
 @login_required

@@ -108,6 +108,8 @@ def get_current_user():
                     'username': user['username'],
                     'roles': user_roles,
                     'email': user.get('email', ''),
+                    'first_name': user.get('first_name', ''),
+                    'last_name': user.get('last_name', ''),
                     'is_local': False,
                     'is_admin': is_admin
                 }
