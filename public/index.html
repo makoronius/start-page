@@ -1523,6 +1523,16 @@
             </div>
 
             <div class="form-group">
+                <label for="user-first-name">First Name</label>
+                <input type="text" id="user-first-name">
+            </div>
+
+            <div class="form-group">
+                <label for="user-last-name">Last Name</label>
+                <input type="text" id="user-last-name">
+            </div>
+
+            <div class="form-group">
                 <label for="user-email">Email</label>
                 <input type="email" id="user-email">
             </div>
@@ -3301,6 +3311,8 @@
             document.getElementById('user-modal-title').textContent = 'Add New User';
             document.getElementById('user-username').value = '';
             document.getElementById('user-username').disabled = false;
+            document.getElementById('user-first-name').value = '';
+            document.getElementById('user-last-name').value = '';
             document.getElementById('user-email').value = '';
             document.getElementById('user-password').value = '';
             document.getElementById('user-modal-message').innerHTML = '';
@@ -3328,6 +3340,8 @@
                 document.getElementById('user-modal-title').textContent = 'Edit User';
                 document.getElementById('user-username').value = user.username;
                 document.getElementById('user-username').disabled = true;
+                document.getElementById('user-first-name').value = user.first_name || '';
+                document.getElementById('user-last-name').value = user.last_name || '';
                 document.getElementById('user-email').value = user.email || '';
                 document.getElementById('user-password').value = '';
                 document.getElementById('user-password').placeholder = 'Leave empty to keep current password';
@@ -3372,6 +3386,8 @@
 
         async function saveUser() {
             const username = document.getElementById('user-username').value.trim();
+            const firstName = document.getElementById('user-first-name').value.trim();
+            const lastName = document.getElementById('user-last-name').value.trim();
             const email = document.getElementById('user-email').value.trim();
             const password = document.getElementById('user-password').value;
             const messageDiv = document.getElementById('user-modal-message');
@@ -3399,6 +3415,8 @@
             try {
                 const userData = {
                     username,
+                    first_name: firstName,
+                    last_name: lastName,
                     email,
                     roles
                 };
