@@ -154,8 +154,9 @@ def health():
 
 # Authentication endpoints
 @app.route('/api/auth/status', methods=['GET'])
+@limiter.exempt
 def auth_status():
-    """Check authentication status"""
+    """Check authentication status (exempt from rate limiting for dashboard polling)"""
     if is_local_request():
         return jsonify({
             "authenticated": True,
@@ -341,8 +342,9 @@ def update_profile():
 
 @app.route('/api/config', methods=['GET'])
 @login_required
+@limiter.exempt
 def get_config():
-    """Get complete configuration filtered by user permissions"""
+    """Get complete configuration filtered by user permissions (exempt from rate limiting for dashboard polling)"""
     config = load_config()
     if not config:
         return jsonify({"error": "Failed to load configuration"}), 500
