@@ -1819,7 +1819,7 @@
         /* Widget System */
         .widget-layout-container {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
+            grid-template-columns: repeat(24, 1fr);
             grid-auto-rows: 80px;
             gap: 1rem;
             padding: 1rem;
@@ -2012,7 +2012,8 @@
 
         .layout-editor-btn.primary {
             background: white;
-            color: var(--primary-color);
+            color: #4c51bf;
+            font-weight: 600;
         }
 
         .layout-editor-btn.primary:hover {
@@ -2128,6 +2129,16 @@
 
         .widget-resize-handle:hover {
             opacity: 1 !important;
+        }
+
+        /* Hide widget controls in view mode */
+        .widget:not(.editing) .widget-controls {
+            display: none;
+        }
+
+        .widget:not(.editing) .widget-header {
+            padding-bottom: 0;
+            border-bottom: none;
         }
 
         .widget-resize-handle.se {
@@ -6713,6 +6724,7 @@
             editMode: false,
             layoutMode: 'classic', // 'classic' or 'widget'
             draggedWidgetId: null, // Track dragged widget for repositioning
+            isResizing: false, // Track if currently resizing to prevent drag conflicts
 
             init() {
                 // Load layout mode from localStorage
@@ -6912,6 +6924,14 @@
                     this.startClockWidget(widget.id);
                 } else if (widget.type === 'weather') {
                     this.startWeatherWidget(widget.id);
+                } else if (widget.type === 'profile') {
+                    this.startProfileWidget(widget.id);
+                } else if (widget.type === 'title') {
+                    this.startTitleWidget(widget.id);
+                } else if (widget.type === 'categories') {
+                    this.startCategoriesWidget(widget.id);
+                } else if (widget.type === 'services') {
+                    this.startServicesWidget(widget.id);
                 }
             },
 
@@ -7028,6 +7048,131 @@
                 if (locationEl) locationEl.textContent = '📍 ' + mockWeather.location;
             },
 
+            // Profile Widget
+            startProfileWidget(widgetId) {
+                const container = document.getElementById('widget-user-info');
+                if (!container) return;
+
+                // Get current user info
+                if (typeof currentUser !== 'undefined' && currentUser) {
+                    const fullName = [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ');
+                    container.innerHTML = `
+                        <div class="user-card" style="padding: 0.5rem; text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👤</div>
+                            <div style="font-weight: 600; font-size: 1.1rem;">${currentUser.username}</div>
+                            ${fullName ? `<div style="font-weight: 500; margin-top: 0.25rem;">${fullName}</div>` : ''}
+                            ${currentUser.email ? `<div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">${currentUser.email}</div>` : ''}
+                            ${currentUser.roles && currentUser.roles.length > 0 ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">Roles: ${currentUser.roles.join(', ')}</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary);">Not logged in</div>';
+                }
+            },
+
+            // Title Widget
+            startTitleWidget(widgetId) {
+                const titleEl = document.getElementById('widget-page-title');
+                const subtitleEl = document.getElementById('widget-page-subtitle');
+
+                if (typeof config !== 'undefined' && config.settings) {
+                    if (titleEl && config.settings.title) {
+                        titleEl.textContent = config.settings.title;
+                    }
+                    if (subtitleEl && config.settings.subtitle) {
+                        subtitleEl.textContent = config.settings.subtitle;
+                    }
+                }
+            },
+
+            // Categories Widget
+            startCategoriesWidget(widgetId) {
+                const container = document.getElementById('widget-category-tabs');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                if (typeof config === 'undefined' || !config.categories || config.categories.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">No categories</p>';
+                    return;
+                }
+
+                // Create category tabs
+                config.categories.forEach((category, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'tab-btn';
+
+                    if (category.icon) {
+                        btn.textContent = `${category.icon} ${category.name}`;
+                    } else {
+                        btn.textContent = category.name;
+                    }
+
+                    btn.onclick = () => {
+                        // Update active state
+                        container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        // Update services widget if it exists
+                        const servicesWidget = widgetSystem.widgets.find(w => w.type === 'services');
+                        if (servicesWidget) {
+                            widgetSystem.startServicesWidget(servicesWidget.id, category.name);
+                        }
+                    };
+
+                    if (index === 0) {
+                        btn.classList.add('active');
+                    }
+
+                    container.appendChild(btn);
+                });
+            },
+
+            // Services Widget
+            startServicesWidget(widgetId, categoryName) {
+                const container = document.getElementById('widget-services-grid');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                if (typeof config === 'undefined' || !config.services || config.services.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">No services configured</p>';
+                    return;
+                }
+
+                // Get category to display - use provided or first category
+                let targetCategory = categoryName;
+                if (!targetCategory && config.categories && config.categories.length > 0) {
+                    targetCategory = config.categories[0].name;
+                }
+
+                // Filter and render services
+                const categoryServices = targetCategory
+                    ? config.services.filter(s => s.category === targetCategory)
+                    : config.services;
+
+                if (categoryServices.length === 0) {
+                    container.innerHTML = `<p style="color: var(--text-secondary);">No services in ${targetCategory}</p>`;
+                    return;
+                }
+
+                // Apply grid columns setting
+                const gridColumns = config.settings?.grid_columns || 'auto';
+                if (gridColumns === 'auto') {
+                    container.removeAttribute('data-columns');
+                } else {
+                    container.setAttribute('data-columns', gridColumns);
+                }
+
+                // Render each service using the shared createServiceCard function
+                categoryServices.forEach(service => {
+                    if (typeof createServiceCard !== 'undefined') {
+                        const card = createServiceCard(service);
+                        container.appendChild(card);
+                    }
+                });
+            },
+
             // Drag and Drop
             initPaletteDragDrop() {
                 const paletteWidgets = document.querySelectorAll('.palette-widget');
@@ -7051,8 +7196,9 @@
                         const widgetType = e.dataTransfer.getData('widget-type');
 
                         // Calculate grid position from drop coordinates
+                        // Using finer grid (24 columns instead of 12) for more precise positioning
                         const rect = container.getBoundingClientRect();
-                        const x = Math.floor((e.clientX - rect.left) / (rect.width / 12));
+                        const x = Math.floor((e.clientX - rect.left) / (rect.width / 24));
                         const y = Math.floor((e.clientY - rect.top) / 80);
 
                         if (widgetType) {
@@ -7071,7 +7217,7 @@
             },
 
             handleWidgetDragStart(e, widget) {
-                if (!this.editMode) {
+                if (!this.editMode || this.isResizing) {
                     e.preventDefault();
                     return;
                 }
@@ -7089,8 +7235,8 @@
                 const widget = this.widgets.find(w => w.id === widgetId);
                 if (!widget) return;
 
-                // Clamp position to grid
-                newX = Math.max(0, Math.min(newX, 12 - widget.width));
+                // Clamp position to grid (24 columns)
+                newX = Math.max(0, Math.min(newX, 24 - widget.width));
                 newY = Math.max(0, newY);
 
                 widget.x = newX;
@@ -7121,6 +7267,9 @@
                 e.preventDefault();
                 e.stopPropagation();
 
+                // Set resizing flag to prevent drag conflicts
+                this.isResizing = true;
+
                 const widgetId = handle.dataset.widgetId;
                 const direction = handle.dataset.direction;
                 const widget = this.widgets.find(w => w.id === widgetId);
@@ -7128,9 +7277,12 @@
 
                 if (!widget || !widgetEl) return;
 
+                // Disable dragging during resize
+                widgetEl.draggable = false;
+
                 const container = document.getElementById('widget-layout-container');
                 const containerRect = container.getBoundingClientRect();
-                const cellWidth = containerRect.width / 12;
+                const cellWidth = containerRect.width / 24;
                 const cellHeight = 80;
 
                 const startX = e.clientX;
@@ -7155,8 +7307,8 @@
                         newHeight = Math.round((startHeight * cellHeight + deltaY) / cellHeight);
                     }
 
-                    // Constrain to minimum and maximum
-                    newWidth = Math.max(1, Math.min(newWidth, 12 - widget.x));
+                    // Constrain to minimum and maximum (24 columns)
+                    newWidth = Math.max(1, Math.min(newWidth, 24 - widget.x));
                     newHeight = Math.max(1, newHeight);
 
                     // Update widget dimensions
@@ -7170,6 +7322,15 @@
 
                 const onMouseUp = () => {
                     widgetEl.classList.remove('resizing');
+
+                    // Re-enable dragging after resize
+                    if (this.editMode) {
+                        widgetEl.draggable = true;
+                    }
+
+                    // Clear resizing flag
+                    this.isResizing = false;
+
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
                     this.saveLayout();
@@ -7198,14 +7359,14 @@
             },
 
             createDefaultLayout() {
-                // Default layout with essential widgets
-                this.addWidget('profile', 0, 0, 3, 1);
-                this.addWidget('title', 3, 0, 6, 1);
-                this.addWidget('clock', 9, 0, 3, 2);
-                this.addWidget('search', 0, 1, 4, 1);
-                this.addWidget('categories', 4, 1, 8, 1);
-                this.addWidget('services', 0, 2, 12, 4);
-                this.addWidget('weather', 9, 0, 3, 2);
+                // Default layout with essential widgets (24-column grid)
+                this.addWidget('profile', 0, 0, 6, 1);
+                this.addWidget('title', 6, 0, 12, 1);
+                this.addWidget('clock', 18, 0, 6, 2);
+                this.addWidget('search', 0, 1, 8, 1);
+                this.addWidget('categories', 8, 1, 16, 1);
+                this.addWidget('services', 0, 2, 24, 4);
+                this.addWidget('weather', 18, 2, 6, 2);
             },
 
             saveLayout() {
