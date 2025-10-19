@@ -857,7 +857,11 @@
             color: var(--text-primary);
         }
 
-        /* Dialog modal styles */
+        /* Dialog modal styles - higher z-index to appear above other modals */
+        #dialog-modal {
+            z-index: 2000;
+        }
+
         .dialog-modal {
             background: var(--bg-card);
             border-radius: 12px;
@@ -4345,14 +4349,14 @@
                     throw new Error(error.error || 'Failed to save user');
                 }
 
+                closeUserModal();
+                loadUsers();
+
                 await customAlert(
                     `User ${currentEditingUser ? 'updated' : 'created'} successfully`,
                     'Success',
                     'success'
                 );
-
-                closeUserModal();
-                loadUsers();
             } catch (error) {
                 console.error('Error saving user:', error);
                 messageDiv.innerHTML = `<div class="error">${error.message}</div>`;
@@ -4464,9 +4468,10 @@
                     throw new Error(error.error || 'Failed to save role');
                 }
 
-                await customAlert('Role created successfully!', 'Success', 'success');
                 closeRoleModal();
                 loadRoles();
+
+                await customAlert('Role created successfully!', 'Success', 'success');
             } catch (error) {
                 console.error('Error saving role:', error);
                 messageDiv.innerHTML = `<div class="error">${error.message}</div>`;
@@ -5056,21 +5061,22 @@
                     ambientOscillators.push({ stop: () => clearInterval(clinkInterval) });
 
                 } else if (type === 'fireplace') {
-                    // Fireplace: realistic crackling fire with multiple layers
+                    // Fireplace: realistic multi-layered crackling fire with wood burning
 
-                    // 1. Base rumble - deep fire sound
+                    // 1. Deep rumble - base fire roar
                     const rumble = createWhiteNoise();
                     const rumbleFilter = audioContext.createBiquadFilter();
                     rumbleFilter.type = 'lowpass';
-                    rumbleFilter.frequency.value = 150;
+                    rumbleFilter.frequency.value = 120;
+                    rumbleFilter.Q.value = 2;
                     const rumbleGain = audioContext.createGain();
-                    rumbleGain.gain.value = 0.15;
+                    rumbleGain.gain.value = 0.18;
 
-                    // Add LFO to rumble for breathing effect
+                    // LFO for breathing/flickering effect
                     const rumbleLFO = audioContext.createOscillator();
-                    rumbleLFO.frequency.value = 0.2;
+                    rumbleLFO.frequency.value = 0.15 + Math.random() * 0.1;
                     const rumbleLFOGain = audioContext.createGain();
-                    rumbleLFOGain.gain.value = 0.03;
+                    rumbleLFOGain.gain.value = 0.05;
                     rumbleLFO.connect(rumbleLFOGain);
                     rumbleLFOGain.connect(rumbleGain.gain);
 
@@ -5082,14 +5088,42 @@
                     ambientOscillators.push(rumble);
                     ambientOscillators.push(rumbleLFO);
 
-                    // 2. Mid-range crackle layer
+                    // 2. Wood burning hiss/sizzle - high frequency continuous
+                    const hiss = createWhiteNoise();
+                    const hissFilter = audioContext.createBiquadFilter();
+                    hissFilter.type = 'highpass';
+                    hissFilter.frequency.value = 3000;
+                    const hissFilter2 = audioContext.createBiquadFilter();
+                    hissFilter2.type = 'lowpass';
+                    hissFilter2.frequency.value = 8000;
+                    const hissGain = audioContext.createGain();
+                    hissGain.gain.value = 0.06;
+
+                    // Subtle LFO for hiss variation
+                    const hissLFO = audioContext.createOscillator();
+                    hissLFO.frequency.value = 0.3;
+                    const hissLFOGain = audioContext.createGain();
+                    hissLFOGain.gain.value = 0.02;
+                    hissLFO.connect(hissLFOGain);
+                    hissLFOGain.connect(hissGain.gain);
+
+                    hiss.connect(hissFilter);
+                    hissFilter.connect(hissFilter2);
+                    hissFilter2.connect(hissGain);
+                    hissGain.connect(ambientMasterGain);
+                    hiss.start(0);
+                    hissLFO.start(0);
+                    ambientOscillators.push(hiss);
+                    ambientOscillators.push(hissLFO);
+
+                    // 3. Mid-range fire crackle layer
                     const midCrackle = createWhiteNoise();
                     const midFilter = audioContext.createBiquadFilter();
                     midFilter.type = 'bandpass';
-                    midFilter.frequency.value = 800;
-                    midFilter.Q.value = 2;
+                    midFilter.frequency.value = 600;
+                    midFilter.Q.value = 3;
                     const midGain = audioContext.createGain();
-                    midGain.gain.value = 0.08;
+                    midGain.gain.value = 0.10;
 
                     midCrackle.connect(midFilter);
                     midFilter.connect(midGain);
@@ -5097,87 +5131,176 @@
                     midCrackle.start(0);
                     ambientOscillators.push(midCrackle);
 
-                    // 3. Random crackles and pops
-                    function createCrackle(intensity = 1) {
+                    // 4. Wood crackles - sharp, varied frequency
+                    function createCrackle(intensity = 1, pan = 0) {
                         const crackle = createWhiteNoise();
                         const crackleFilter = audioContext.createBiquadFilter();
                         crackleFilter.type = 'bandpass';
 
-                        // Vary frequency for different crackle types
-                        const baseFreq = 400 + Math.random() * 2000;
+                        const baseFreq = 600 + Math.random() * 2500;
                         crackleFilter.frequency.value = baseFreq;
-                        crackleFilter.Q.value = 3 + Math.random() * 5;
+                        crackleFilter.Q.value = 4 + Math.random() * 6;
 
                         const crackleGain = audioContext.createGain();
                         const now = audioContext.currentTime;
-                        const duration = 0.05 + Math.random() * 0.15;
-                        const maxGain = (0.2 + Math.random() * 0.3) * intensity;
+                        const duration = 0.04 + Math.random() * 0.12;
+                        const maxGain = (0.15 + Math.random() * 0.25) * intensity;
 
-                        // Sharp attack, quick decay
+                        // Stereo panning
+                        const panner = audioContext.createStereoPanner();
+                        panner.pan.value = pan;
+
+                        // Very sharp attack, exponential decay
                         crackleGain.gain.setValueAtTime(0, now);
-                        crackleGain.gain.linearRampToValueAtTime(maxGain, now + 0.01);
+                        crackleGain.gain.linearRampToValueAtTime(maxGain, now + 0.005);
                         crackleGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
                         crackle.connect(crackleFilter);
                         crackleFilter.connect(crackleGain);
-                        crackleGain.connect(ambientMasterGain);
+                        crackleGain.connect(panner);
+                        panner.connect(ambientMasterGain);
 
                         crackle.start(now);
                         crackle.stop(now + duration + 0.01);
                     }
 
-                    // 4. Random pops (lower frequency, louder)
-                    function createPop() {
+                    // 5. Heavy pops - deeper, louder
+                    function createPop(pan = 0) {
                         const pop = createWhiteNoise();
                         const popFilter = audioContext.createBiquadFilter();
                         popFilter.type = 'bandpass';
-                        popFilter.frequency.value = 200 + Math.random() * 400;
-                        popFilter.Q.value = 8;
+                        popFilter.frequency.value = 150 + Math.random() * 350;
+                        popFilter.Q.value = 10;
 
                         const popGain = audioContext.createGain();
                         const now = audioContext.currentTime;
-                        const duration = 0.08 + Math.random() * 0.12;
+                        const duration = 0.10 + Math.random() * 0.15;
 
-                        // Very sharp attack, longer decay
+                        // Stereo panning
+                        const panner = audioContext.createStereoPanner();
+                        panner.pan.value = pan;
+
+                        // Explosive attack, slow decay
                         popGain.gain.setValueAtTime(0, now);
-                        popGain.gain.linearRampToValueAtTime(0.4, now + 0.005);
+                        popGain.gain.linearRampToValueAtTime(0.45, now + 0.003);
                         popGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
                         pop.connect(popFilter);
                         popFilter.connect(popGain);
-                        popGain.connect(ambientMasterGain);
+                        popGain.connect(panner);
+                        panner.connect(ambientMasterGain);
 
                         pop.start(now);
                         pop.stop(now + duration + 0.01);
                     }
 
-                    // Schedule crackles at varying intervals
+                    // 6. Ember pops - high pitched small crackles
+                    function createEmber() {
+                        const ember = createWhiteNoise();
+                        const emberFilter = audioContext.createBiquadFilter();
+                        emberFilter.type = 'highpass';
+                        emberFilter.frequency.value = 2000 + Math.random() * 3000;
+                        emberFilter.Q.value = 15;
+
+                        const emberGain = audioContext.createGain();
+                        const now = audioContext.currentTime;
+                        const duration = 0.02 + Math.random() * 0.05;
+
+                        // Quick tick sound
+                        emberGain.gain.setValueAtTime(0, now);
+                        emberGain.gain.linearRampToValueAtTime(0.12, now + 0.002);
+                        emberGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                        ember.connect(emberFilter);
+                        emberFilter.connect(emberGain);
+                        emberGain.connect(ambientMasterGain);
+
+                        ember.start(now);
+                        ember.stop(now + duration + 0.01);
+                    }
+
+                    // 7. Log shifts - deep rumbles
+                    function createLogShift() {
+                        const shift = createWhiteNoise();
+                        const shiftFilter = audioContext.createBiquadFilter();
+                        shiftFilter.type = 'lowpass';
+                        shiftFilter.frequency.value = 80 + Math.random() * 150;
+                        shiftFilter.Q.value = 3;
+
+                        const shiftGain = audioContext.createGain();
+                        const now = audioContext.currentTime;
+                        const duration = 0.3 + Math.random() * 0.4;
+
+                        // Slow rise and fall
+                        shiftGain.gain.setValueAtTime(0, now);
+                        shiftGain.gain.linearRampToValueAtTime(0.25, now + 0.15);
+                        shiftGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                        shift.connect(shiftFilter);
+                        shiftFilter.connect(shiftGain);
+                        shiftGain.connect(ambientMasterGain);
+
+                        shift.start(now);
+                        shift.stop(now + duration + 0.01);
+                    }
+
+                    // Scheduling functions with dynamic timing
+                    let nextCrackleTime = 200;
                     function scheduleCrackles() {
                         if (ambientOscillators.length > 0) {
-                            // Multiple crackles in quick succession
-                            const burstSize = 1 + Math.floor(Math.random() * 4);
+                            // Multiple crackles in bursts with random panning
+                            const burstSize = 1 + Math.floor(Math.random() * 5);
                             for (let i = 0; i < burstSize; i++) {
                                 setTimeout(() => {
-                                    createCrackle(1 - i * 0.15);
-                                }, i * (30 + Math.random() * 70));
+                                    const pan = (Math.random() - 0.5) * 0.6; // Stereo spread
+                                    createCrackle(1 - i * 0.1, pan);
+                                }, i * (25 + Math.random() * 60));
+                            }
+                            // Vary interval for natural feel
+                            nextCrackleTime = 250 + Math.random() * 500;
+                        }
+                    }
+
+                    function schedulePops() {
+                        if (ambientOscillators.length > 0) {
+                            const pan = (Math.random() - 0.5) * 0.8;
+                            createPop(pan);
+                        }
+                    }
+
+                    function scheduleEmbers() {
+                        if (ambientOscillators.length > 0) {
+                            // Multiple small ember pops
+                            const emberCount = 1 + Math.floor(Math.random() * 3);
+                            for (let i = 0; i < emberCount; i++) {
+                                setTimeout(() => createEmber(), i * (50 + Math.random() * 100));
                             }
                         }
                     }
 
-                    // Schedule pops at longer intervals
-                    function schedulePops() {
+                    function scheduleLogShift() {
                         if (ambientOscillators.length > 0) {
-                            createPop();
+                            createLogShift();
                         }
                     }
 
-                    // Crackle interval: frequent small bursts
-                    const crackleInterval = setInterval(scheduleCrackles, 300 + Math.random() * 400);
-                    ambientOscillators.push({ stop: () => clearInterval(crackleInterval) });
+                    // Interval scheduling with varied timing
+                    function crackleLoop() {
+                        scheduleCrackles();
+                        const delay = nextCrackleTime;
+                        const timeout = setTimeout(crackleLoop, delay);
+                        ambientOscillators.push({ stop: () => clearTimeout(timeout) });
+                    }
+                    crackleLoop();
 
-                    // Pop interval: occasional loud pops
-                    const popInterval = setInterval(schedulePops, 1500 + Math.random() * 2000);
+                    const popInterval = setInterval(schedulePops, 1800 + Math.random() * 2500);
                     ambientOscillators.push({ stop: () => clearInterval(popInterval) });
+
+                    const emberInterval = setInterval(scheduleEmbers, 800 + Math.random() * 1200);
+                    ambientOscillators.push({ stop: () => clearInterval(emberInterval) });
+
+                    const logShiftInterval = setInterval(scheduleLogShift, 8000 + Math.random() * 12000);
+                    ambientOscillators.push({ stop: () => clearInterval(logShiftInterval) });
                 }
             } catch (e) {
                 console.log('Ambient sound error:', e);
