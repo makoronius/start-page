@@ -1816,6 +1816,303 @@
             75% { transform: scaleX(0.9); }
         }
 
+        /* Widget System */
+        .widget-layout-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: 80px;
+            gap: 1rem;
+            padding: 1rem;
+            min-height: calc(100vh - 200px);
+        }
+
+        .widget {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .widget:hover {
+            box-shadow: 0 4px 16px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .widget.dragging {
+            opacity: 0.5;
+            cursor: move;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .widget-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .widget-controls {
+            display: flex;
+            gap: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .widget:hover .widget-controls {
+            opacity: 1;
+        }
+
+        .widget-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .widget-btn:hover {
+            background: var(--card-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .widget-content {
+            height: calc(100% - 40px);
+            overflow: auto;
+        }
+
+        /* Clock Widget */
+        .clock-widget {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .clock-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+            margin-bottom: 0.25rem;
+        }
+
+        .clock-date {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .clock-timezone {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Weather Widget */
+        .weather-widget {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+        }
+
+        .weather-temp {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .weather-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .weather-location {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: auto;
+        }
+
+        /* Layout Editor */
+        .layout-editor-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--primary-color), #667eea);
+            color: white;
+            padding: 1rem;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .layout-editor-bar.active {
+            display: flex;
+        }
+
+        .layout-editor-title {
+            font-weight: 600;
+            margin-right: auto;
+        }
+
+        .layout-editor-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .layout-editor-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .layout-editor-btn.primary {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .layout-editor-btn.primary:hover {
+            background: rgba(255,255,255,0.9);
+        }
+
+        .widget-palette {
+            position: fixed;
+            right: 1rem;
+            top: 80px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 8px 24px var(--shadow);
+            display: none;
+            z-index: 10000;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .widget-palette.active {
+            display: block;
+        }
+
+        .palette-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .palette-widget {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .palette-widget:hover {
+            background: var(--card-bg-hover);
+            transform: translateX(-4px);
+        }
+
+        .palette-widget-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .palette-widget-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .widget-dropzone {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .widget-dropzone.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(var(--primary-color-rgb), 0.1);
+            color: var(--primary-color);
+        }
+
+        /* Layout mode toggle */
+        .layout-mode-indicator {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .layout-mode-indicator:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px var(--shadow);
+        }
+
         /* Emoji Picker */
         .emoji-categories {
             display: flex;
@@ -2485,6 +2782,58 @@
 
     <!-- Cockroach Easter Egg Trigger (bottom-left corner, hidden) -->
     <div id="cockroach-trigger" style="position: fixed; bottom: 0; left: 0; width: 50px; height: 50px; z-index: 10000; cursor: crosshair; opacity: 0;" title="Click me 3 times!"></div>
+
+    <!-- Widget Layout Editor Bar -->
+    <div id="layout-editor-bar" class="layout-editor-bar">
+        <div class="layout-editor-title">🎨 Layout Editor</div>
+        <button class="layout-editor-btn" onclick="widgetSystem.addWidgetFromPalette()">➕ Add Widget</button>
+        <button class="layout-editor-btn" onclick="widgetSystem.resetLayout()">🔄 Reset</button>
+        <button class="layout-editor-btn" onclick="widgetSystem.switchToClassicMode()">📋 Classic Mode</button>
+        <button class="layout-editor-btn primary" onclick="widgetSystem.exitEditMode()">✓ Done</button>
+    </div>
+
+    <!-- Widget Palette -->
+    <div id="widget-palette" class="widget-palette">
+        <div class="palette-title">Available Widgets</div>
+        <div class="palette-widget" draggable="true" data-widget-type="clock">
+            <div class="palette-widget-title">🕐 Clock</div>
+            <div class="palette-widget-desc">Display current time and date</div>
+        </div>
+        <div class="palette-widget" draggable="true" data-widget-type="weather">
+            <div class="palette-widget-title">🌤️ Weather</div>
+            <div class="palette-widget-desc">Current weather conditions</div>
+        </div>
+        <div class="palette-widget" draggable="true" data-widget-type="profile">
+            <div class="palette-widget-title">👤 Profile</div>
+            <div class="palette-widget-desc">User profile and logout</div>
+        </div>
+        <div class="palette-widget" draggable="true" data-widget-type="title">
+            <div class="palette-widget-title">📝 Title</div>
+            <div class="palette-widget-desc">Page title and subtitle</div>
+        </div>
+        <div class="palette-widget" draggable="true" data-widget-type="categories">
+            <div class="palette-widget-title">📁 Categories</div>
+            <div class="palette-widget-desc">Service categories navigation</div>
+        </div>
+        <div class="palette-widget" draggable="true" data-widget-type="search">
+            <div class="palette-widget-title">🔍 Search</div>
+            <div class="palette-widget-desc">Search services</div>
+        </div>
+        <div class="palette-widget" draggable="true" data-widget-type="services">
+            <div class="palette-widget-title">🚀 Services</div>
+            <div class="palette-widget-desc">Service cards grid</div>
+        </div>
+    </div>
+
+    <!-- Layout Mode Toggle Button -->
+    <div id="layout-mode-toggle" class="layout-mode-indicator" onclick="widgetSystem.toggleLayoutMode()" title="Toggle Widget/Classic Mode">
+        🧩
+    </div>
+
+    <!-- Widget Layout Container (hidden by default, shown when widget mode enabled) -->
+    <div id="widget-layout-container" class="widget-layout-container" style="display: none;">
+        <!-- Widgets will be dynamically inserted here -->
+    </div>
 
     <script>
         let config = null;
@@ -6302,6 +6651,381 @@
             document.getElementById('easter-egg').classList.remove('show');
         }
 
+        // Widget System
+        const widgetSystem = {
+            widgets: [],
+            editMode: false,
+            layoutMode: 'classic', // 'classic' or 'widget'
+
+            init() {
+                // Load layout mode from localStorage
+                this.layoutMode = localStorage.getItem('layoutMode') || 'classic';
+                this.loadLayout();
+
+                if (this.layoutMode === 'widget') {
+                    this.showWidgetLayout();
+                }
+
+                // Initialize drag and drop for palette
+                this.initPaletteDragDrop();
+            },
+
+            toggleLayoutMode() {
+                if (this.layoutMode === 'classic') {
+                    this.switchToWidgetMode();
+                } else {
+                    this.switchToClassicMode();
+                }
+            },
+
+            switchToWidgetMode() {
+                this.layoutMode = 'widget';
+                localStorage.setItem('layoutMode', 'widget');
+
+                // Hide classic dashboard
+                const dashboard = document.getElementById('main-dashboard');
+                if (dashboard) dashboard.style.display = 'none';
+
+                // Show widget layout
+                this.showWidgetLayout();
+                this.enterEditMode();
+
+                showToast('Widget mode enabled! Drag widgets from the palette', 'success');
+            },
+
+            switchToClassicMode() {
+                this.layoutMode = 'classic';
+                localStorage.setItem('layoutMode', 'classic');
+
+                // Show classic dashboard
+                const dashboard = document.getElementById('main-dashboard');
+                if (dashboard) dashboard.style.display = 'block';
+
+                // Hide widget layout
+                const container = document.getElementById('widget-layout-container');
+                if (container) container.style.display = 'none';
+
+                this.exitEditMode();
+
+                showToast('Classic mode enabled', 'success');
+            },
+
+            showWidgetLayout() {
+                const container = document.getElementById('widget-layout-container');
+                if (container) {
+                    container.style.display = 'grid';
+                }
+                this.renderWidgets();
+            },
+
+            enterEditMode() {
+                this.editMode = true;
+                document.getElementById('layout-editor-bar').classList.add('active');
+                document.getElementById('widget-palette').classList.add('active');
+
+                // Add edit mode class to all widgets
+                this.widgets.forEach(widget => {
+                    const el = document.getElementById(widget.id);
+                    if (el) {
+                        el.classList.add('editing');
+                        el.draggable = true;
+                    }
+                });
+            },
+
+            exitEditMode() {
+                this.editMode = false;
+                document.getElementById('layout-editor-bar').classList.remove('active');
+                document.getElementById('widget-palette').classList.remove('active');
+
+                // Remove edit mode class from all widgets
+                this.widgets.forEach(widget => {
+                    const el = document.getElementById(widget.id);
+                    if (el) {
+                        el.classList.remove('editing');
+                        el.draggable = false;
+                    }
+                });
+
+                this.saveLayout();
+            },
+
+            addWidget(type, x, y, width, height, settings = {}) {
+                const widget = {
+                    id: 'widget-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    type: type,
+                    x: x || 0,
+                    y: y || 0,
+                    width: width || 3,
+                    height: height || 2,
+                    settings: settings
+                };
+
+                this.widgets.push(widget);
+                this.renderWidget(widget);
+                this.saveLayout();
+
+                return widget;
+            },
+
+            removeWidget(widgetId) {
+                this.widgets = this.widgets.filter(w => w.id !== widgetId);
+                const el = document.getElementById(widgetId);
+                if (el) el.remove();
+                this.saveLayout();
+            },
+
+            renderWidgets() {
+                const container = document.getElementById('widget-layout-container');
+                if (!container) return;
+
+                container.innerHTML = '';
+                this.widgets.forEach(widget => this.renderWidget(widget));
+            },
+
+            renderWidget(widget) {
+                const container = document.getElementById('widget-layout-container');
+                if (!container) return;
+
+                const el = document.createElement('div');
+                el.id = widget.id;
+                el.className = 'widget';
+                el.style.gridColumn = `${widget.x + 1} / span ${widget.width}`;
+                el.style.gridRow = `${widget.y + 1} / span ${widget.height}`;
+
+                if (this.editMode) {
+                    el.draggable = true;
+                    el.classList.add('editing');
+                }
+
+                // Add widget content based on type
+                el.innerHTML = this.getWidgetContent(widget);
+
+                // Add drag event listeners
+                el.addEventListener('dragstart', (e) => this.handleWidgetDragStart(e, widget));
+                el.addEventListener('dragend', (e) => this.handleWidgetDragEnd(e, widget));
+
+                container.appendChild(el);
+
+                // Start widget updates if needed
+                if (widget.type === 'clock') {
+                    this.startClockWidget(widget.id);
+                } else if (widget.type === 'weather') {
+                    this.startWeatherWidget(widget.id);
+                }
+            },
+
+            getWidgetContent(widget) {
+                const widgetDefs = {
+                    clock: {
+                        title: '🕐 Clock',
+                        content: '<div class="widget-content clock-widget"><div class="clock-time" id="' + widget.id + '-time">00:00:00</div><div class="clock-date" id="' + widget.id + '-date">Loading...</div><div class="clock-timezone" id="' + widget.id + '-timezone"></div></div>'
+                    },
+                    weather: {
+                        title: '🌤️ Weather',
+                        content: '<div class="widget-content weather-widget"><div class="weather-main"><div class="weather-icon" id="' + widget.id + '-icon">☁️</div><div><div class="weather-temp" id="' + widget.id + '-temp">--°</div><div class="weather-desc" id="' + widget.id + '-desc">Loading...</div></div></div><div class="weather-details" id="' + widget.id + '-details"></div><div class="weather-location" id="' + widget.id + '-location"></div></div>'
+                    },
+                    profile: {
+                        title: '👤 Profile',
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center;"><div id="widget-user-info"></div></div>'
+                    },
+                    title: {
+                        title: '📝 Title',
+                        content: '<div class="widget-content" style="text-align: center;"><h1 style="margin: 0;" id="widget-page-title">🚀 Local Services Dashboard</h1><p style="margin: 0.5rem 0 0 0;" id="widget-page-subtitle">Your development environment at a glance</p></div>'
+                    },
+                    categories: {
+                        title: '📁 Categories',
+                        content: '<div class="widget-content"><div id="widget-category-tabs"></div></div>'
+                    },
+                    search: {
+                        title: '🔍 Search',
+                        content: '<div class="widget-content"><input type="text" class="search-box" placeholder="Search services..." oninput="filterServices()"></div>'
+                    },
+                    services: {
+                        title: '🚀 Services',
+                        content: '<div class="widget-content"><div id="widget-services-grid" class="services-grid"></div></div>'
+                    }
+                };
+
+                const def = widgetDefs[widget.type] || { title: 'Unknown', content: '<div>Unknown widget type</div>' };
+
+                return `
+                    <div class="widget-header">
+                        <div class="widget-title">${def.title}</div>
+                        <div class="widget-controls">
+                            <button class="widget-btn" onclick="widgetSystem.configureWidget('${widget.id}')" title="Settings">⚙️</button>
+                            <button class="widget-btn" onclick="widgetSystem.removeWidget('${widget.id}')" title="Remove">🗑️</button>
+                        </div>
+                    </div>
+                    ${def.content}
+                `;
+            },
+
+            // Clock Widget
+            startClockWidget(widgetId) {
+                const updateClock = () => {
+                    const now = new Date();
+                    const timeEl = document.getElementById(widgetId + '-time');
+                    const dateEl = document.getElementById(widgetId + '-date');
+                    const timezoneEl = document.getElementById(widgetId + '-timezone');
+
+                    if (timeEl) {
+                        timeEl.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+                    }
+                    if (dateEl) {
+                        dateEl.textContent = now.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    }
+                    if (timezoneEl) {
+                        timezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    }
+                };
+
+                updateClock();
+                setInterval(updateClock, 1000);
+            },
+
+            // Weather Widget
+            async startWeatherWidget(widgetId) {
+                // Mock weather data - in production, call a weather API
+                const mockWeather = {
+                    temp: Math.round(15 + Math.random() * 15),
+                    description: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy'][Math.floor(Math.random() * 4)],
+                    humidity: Math.round(40 + Math.random() * 40),
+                    wind: Math.round(5 + Math.random() * 15),
+                    location: 'Local'
+                };
+
+                const iconEl = document.getElementById(widgetId + '-icon');
+                const tempEl = document.getElementById(widgetId + '-temp');
+                const descEl = document.getElementById(widgetId + '-desc');
+                const detailsEl = document.getElementById(widgetId + '-details');
+                const locationEl = document.getElementById(widgetId + '-location');
+
+                const weatherIcons = {
+                    'Sunny': '☀️',
+                    'Cloudy': '☁️',
+                    'Partly Cloudy': '⛅',
+                    'Rainy': '🌧️'
+                };
+
+                if (iconEl) iconEl.textContent = weatherIcons[mockWeather.description] || '🌤️';
+                if (tempEl) tempEl.textContent = mockWeather.temp + '°C';
+                if (descEl) descEl.textContent = mockWeather.description;
+                if (detailsEl) {
+                    detailsEl.innerHTML = `
+                        <div class="weather-detail"><span>💧</span> ${mockWeather.humidity}%</div>
+                        <div class="weather-detail"><span>💨</span> ${mockWeather.wind} km/h</div>
+                    `;
+                }
+                if (locationEl) locationEl.textContent = '📍 ' + mockWeather.location;
+            },
+
+            // Drag and Drop
+            initPaletteDragDrop() {
+                const paletteWidgets = document.querySelectorAll('.palette-widget');
+                paletteWidgets.forEach(pw => {
+                    pw.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('widget-type', pw.dataset.widgetType);
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                });
+
+                const container = document.getElementById('widget-layout-container');
+                if (container) {
+                    container.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'copy';
+                    });
+
+                    container.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        const widgetType = e.dataTransfer.getData('widget-type');
+                        if (widgetType) {
+                            // Calculate grid position from drop coordinates
+                            const rect = container.getBoundingClientRect();
+                            const x = Math.floor((e.clientX - rect.left) / (rect.width / 12));
+                            const y = Math.floor((e.clientY - rect.top) / 80);
+
+                            this.addWidget(widgetType, x, y);
+                            showToast('Widget added', 'success');
+                        }
+                    });
+                }
+            },
+
+            handleWidgetDragStart(e, widget) {
+                if (!this.editMode) return;
+                e.dataTransfer.setData('widget-id', widget.id);
+                e.target.classList.add('dragging');
+            },
+
+            handleWidgetDragEnd(e, widget) {
+                e.target.classList.remove('dragging');
+            },
+
+            addWidgetFromPalette() {
+                document.getElementById('widget-palette').classList.toggle('active');
+            },
+
+            configureWidget(widgetId) {
+                showToast('Widget configuration coming soon', 'info');
+            },
+
+            resetLayout() {
+                if (confirm('Reset layout to default? This will remove all widgets.')) {
+                    this.widgets = [];
+                    this.createDefaultLayout();
+                    this.renderWidgets();
+                    this.saveLayout();
+                    showToast('Layout reset to default', 'success');
+                }
+            },
+
+            createDefaultLayout() {
+                // Default layout with essential widgets
+                this.addWidget('profile', 0, 0, 3, 1);
+                this.addWidget('title', 3, 0, 6, 1);
+                this.addWidget('clock', 9, 0, 3, 2);
+                this.addWidget('search', 0, 1, 4, 1);
+                this.addWidget('categories', 4, 1, 8, 1);
+                this.addWidget('services', 0, 2, 12, 4);
+                this.addWidget('weather', 9, 0, 3, 2);
+            },
+
+            saveLayout() {
+                const layout = {
+                    mode: this.layoutMode,
+                    widgets: this.widgets
+                };
+                localStorage.setItem('widgetLayout', JSON.stringify(layout));
+            },
+
+            loadLayout() {
+                try {
+                    const saved = localStorage.getItem('widgetLayout');
+                    if (saved) {
+                        const layout = JSON.parse(saved);
+                        this.widgets = layout.widgets || [];
+                        if (layout.mode) {
+                            this.layoutMode = layout.mode;
+                        }
+                    }
+
+                    // Create default layout if no widgets
+                    if (this.widgets.length === 0 && this.layoutMode === 'widget') {
+                        this.createDefaultLayout();
+                    }
+                } catch (e) {
+                    console.error('Failed to load widget layout:', e);
+                }
+            }
+        };
+
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize - check authentication first
@@ -6404,6 +7128,14 @@
                 }
             } catch (e) {
                 console.log('Cockroach initialization failed:', e);
+            }
+
+            // Initialize widget system
+            try {
+                widgetSystem.init();
+                console.log('Widget system initialized');
+            } catch (e) {
+                console.log('Widget system initialization failed:', e);
             }
 
             // Auto-refresh
