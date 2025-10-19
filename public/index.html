@@ -3847,10 +3847,23 @@
                     const img = document.createElement('img');
                     img.src = image.url + '?t=' + Date.now();
                     img.style.cssText = 'width: 100%; height: 200px; object-fit: cover; cursor: pointer;';
-                    img.onclick = () => viewImageFullscreen(image.url);
+                    img.title = 'Click to copy prompt and regenerate';
+                    img.onclick = () => copyDescriptionToInput(image.description, image.url);
 
                     const infoDiv = document.createElement('div');
                     infoDiv.style.cssText = 'padding: 1rem;';
+
+                    // Show description/prompt if available
+                    if (image.description) {
+                        const descDiv = document.createElement('div');
+                        const truncated = image.description.length > 80
+                            ? image.description.substring(0, 80) + '...'
+                            : image.description;
+                        descDiv.textContent = truncated;
+                        descDiv.title = image.description; // Full text on hover
+                        descDiv.style.cssText = 'font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.75rem; font-style: italic; line-height: 1.4;';
+                        infoDiv.appendChild(descDiv);
+                    }
 
                     const dateSpan = document.createElement('div');
                     dateSpan.textContent = new Date(image.created).toLocaleString();
@@ -3891,6 +3904,35 @@
             } catch (error) {
                 console.error('Error loading gallery:', error);
                 showToast('Failed to load image gallery', 'error');
+            }
+        }
+
+        function copyDescriptionToInput(description, imageUrl) {
+            playSound('click');
+
+            if (description) {
+                // Copy description to the input field
+                const promptInput = document.getElementById('ai-image-prompt');
+                promptInput.value = description;
+
+                // Update character count
+                const charCount = document.getElementById('prompt-char-count');
+                charCount.textContent = description.length;
+
+                // Show the image in preview
+                currentGeneratedImage = imageUrl.split('/').pop();
+                const previewDiv = document.getElementById('generated-image-preview');
+                const previewImage = document.getElementById('preview-image');
+                previewImage.src = imageUrl + '?t=' + Date.now();
+                previewDiv.style.display = 'block';
+
+                // Scroll to top to show the input field
+                document.getElementById('tools-tab').scrollTop = 0;
+
+                showToast('Prompt copied! Ready to regenerate or modify.', 'success');
+            } else {
+                // If no description, just open the image
+                window.open(imageUrl, '_blank');
             }
         }
 

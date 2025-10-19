@@ -959,12 +959,24 @@ def generate_image():
         # Generate image
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_desc = "".join(c for c in description[:50] if c.isalnum() or c in (' ', '-', '_')).strip().replace(' ', '_')
-        filename = f"{username}_{timestamp}_{safe_desc}.png"
+        filename = f"{username}_{timestamp}_{safe_desc}.jpg"
         filepath = os.path.join(GENERATED_IMAGES_DIR, filename)
 
-        # Generate and save image
-        image = blossom.generate(description)
-        image.save(filepath)
+        # Generate and save image using Blossom AI
+        blossom.image.save(description, filepath)
+
+        # Save metadata (description/prompt) alongside the image
+        metadata_filename = filename.replace('.jpg', '.json')
+        metadata_filepath = os.path.join(GENERATED_IMAGES_DIR, metadata_filename)
+        metadata = {
+            'description': description,
+            'username': username,
+            'timestamp': timestamp,
+            'filename': filename,
+            'created': datetime.now().isoformat()
+        }
+        with open(metadata_filepath, 'w') as f:
+            json.dump(metadata, f, indent=2)
 
         audit_log('ai_image_generated', username=username, details={'description': description, 'filename': filename})
 
@@ -1004,12 +1016,25 @@ def list_generated_images():
                         parts = filename.rsplit('_', 2)
                         image_username = parts[0] if len(parts) >= 3 else 'unknown'
 
+                        # Try to load metadata
+                        metadata_filename = filename.replace('.jpg', '.json').replace('.png', '.json').replace('.jpeg', '.json')
+                        metadata_filepath = os.path.join(GENERATED_IMAGES_DIR, metadata_filename)
+                        description = None
+                        if os.path.exists(metadata_filepath):
+                            try:
+                                with open(metadata_filepath, 'r') as f:
+                                    metadata = json.load(f)
+                                    description = metadata.get('description')
+                            except Exception as e:
+                                print(f"Error loading metadata for {filename}: {e}")
+
                         images.append({
                             'filename': filename,
                             'url': f"/api/tools/images/{filename}",
                             'size': stat.st_size,
                             'created': datetime.fromtimestamp(stat.st_ctime).isoformat(),
-                            'username': image_username
+                            'username': image_username,
+                            'description': description
                         })
 
         # Sort by creation date, newest first
@@ -1061,7 +1086,15 @@ def delete_generated_image(filename):
         if not os.path.exists(filepath):
             return jsonify({"error": "Image not found"}), 404
 
+        # Delete the image file
         os.remove(filepath)
+
+        # Also delete the metadata JSON file if it exists
+        metadata_filename = filename.replace('.jpg', '.json').replace('.png', '.json').replace('.jpeg', '.json')
+        metadata_filepath = os.path.join(GENERATED_IMAGES_DIR, metadata_filename)
+        if os.path.exists(metadata_filepath):
+            os.remove(metadata_filepath)
+
         audit_log('ai_image_deleted', username=username, details={'filename': filename})
 
         return jsonify({"success": True, "message": "Image deleted successfully"}), 200
