@@ -2113,6 +2113,57 @@
             box-shadow: 0 6px 16px var(--shadow);
         }
 
+        /* Widget Resize Handles */
+        .widget-resize-handle {
+            position: absolute;
+            background: var(--primary-color);
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .widget.editing:hover .widget-resize-handle {
+            opacity: 0.7;
+        }
+
+        .widget-resize-handle:hover {
+            opacity: 1 !important;
+        }
+
+        .widget-resize-handle.se {
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: se-resize;
+            border-radius: 0 0 12px 0;
+        }
+
+        .widget-resize-handle.e {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 40px;
+            cursor: e-resize;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .widget-resize-handle.s {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 6px;
+            cursor: s-resize;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .widget.resizing {
+            opacity: 0.8;
+            transition: none;
+        }
+
         /* Emoji Picker */
         .emoji-categories {
             display: flex;
@@ -6807,6 +6858,9 @@
 
                 container.appendChild(el);
 
+                // Initialize resize handlers
+                this.initWidgetResize(el);
+
                 // Start widget updates if needed
                 if (widget.type === 'clock') {
                     this.startClockWidget(widget.id);
@@ -6858,6 +6912,9 @@
                         </div>
                     </div>
                     ${def.content}
+                    <div class="widget-resize-handle se" data-widget-id="${widget.id}" data-direction="se"></div>
+                    <div class="widget-resize-handle e" data-widget-id="${widget.id}" data-direction="e"></div>
+                    <div class="widget-resize-handle s" data-widget-id="${widget.id}" data-direction="s"></div>
                 `;
             },
 
@@ -6939,20 +6996,26 @@
                 if (container) {
                     container.addEventListener('dragover', (e) => {
                         e.preventDefault();
-                        e.dataTransfer.dropEffect = 'copy';
+                        e.dataTransfer.dropEffect = e.dataTransfer.getData('widget-id') ? 'move' : 'copy';
                     });
 
                     container.addEventListener('drop', (e) => {
                         e.preventDefault();
                         const widgetType = e.dataTransfer.getData('widget-type');
-                        if (widgetType) {
-                            // Calculate grid position from drop coordinates
-                            const rect = container.getBoundingClientRect();
-                            const x = Math.floor((e.clientX - rect.left) / (rect.width / 12));
-                            const y = Math.floor((e.clientY - rect.top) / 80);
+                        const widgetId = e.dataTransfer.getData('widget-id');
 
+                        // Calculate grid position from drop coordinates
+                        const rect = container.getBoundingClientRect();
+                        const x = Math.floor((e.clientX - rect.left) / (rect.width / 12));
+                        const y = Math.floor((e.clientY - rect.top) / 80);
+
+                        if (widgetType) {
+                            // Adding new widget from palette
                             this.addWidget(widgetType, x, y);
                             showToast('Widget added', 'success');
+                        } else if (widgetId) {
+                            // Moving existing widget
+                            this.moveWidget(widgetId, x, y);
                         }
                     });
                 }
@@ -6961,11 +7024,106 @@
             handleWidgetDragStart(e, widget) {
                 if (!this.editMode) return;
                 e.dataTransfer.setData('widget-id', widget.id);
+                e.dataTransfer.effectAllowed = 'move';
                 e.target.classList.add('dragging');
             },
 
             handleWidgetDragEnd(e, widget) {
                 e.target.classList.remove('dragging');
+            },
+
+            moveWidget(widgetId, newX, newY) {
+                const widget = this.widgets.find(w => w.id === widgetId);
+                if (!widget) return;
+
+                // Clamp position to grid
+                newX = Math.max(0, Math.min(newX, 12 - widget.width));
+                newY = Math.max(0, newY);
+
+                widget.x = newX;
+                widget.y = newY;
+
+                // Update visual position
+                const el = document.getElementById(widgetId);
+                if (el) {
+                    el.style.gridColumn = `${widget.x + 1} / span ${widget.width}`;
+                    el.style.gridRow = `${widget.y + 1} / span ${widget.height}`;
+                }
+
+                this.saveLayout();
+            },
+
+            // Resize functionality
+            initWidgetResize(widgetEl) {
+                if (!this.editMode) return;
+
+                const handles = widgetEl.querySelectorAll('.widget-resize-handle');
+                handles.forEach(handle => {
+                    handle.addEventListener('mousedown', (e) => this.startResize(e, handle));
+                });
+            },
+
+            startResize(e, handle) {
+                if (!this.editMode) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const widgetId = handle.dataset.widgetId;
+                const direction = handle.dataset.direction;
+                const widget = this.widgets.find(w => w.id === widgetId);
+                const widgetEl = document.getElementById(widgetId);
+
+                if (!widget || !widgetEl) return;
+
+                const container = document.getElementById('widget-layout-container');
+                const containerRect = container.getBoundingClientRect();
+                const cellWidth = containerRect.width / 12;
+                const cellHeight = 80;
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = widget.width;
+                const startHeight = widget.height;
+
+                widgetEl.classList.add('resizing');
+
+                const onMouseMove = (e) => {
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+
+                    let newWidth = startWidth;
+                    let newHeight = startHeight;
+
+                    // Calculate new dimensions based on direction
+                    if (direction.includes('e')) {
+                        newWidth = Math.round((startWidth * cellWidth + deltaX) / cellWidth);
+                    }
+                    if (direction.includes('s')) {
+                        newHeight = Math.round((startHeight * cellHeight + deltaY) / cellHeight);
+                    }
+
+                    // Constrain to minimum and maximum
+                    newWidth = Math.max(1, Math.min(newWidth, 12 - widget.x));
+                    newHeight = Math.max(1, newHeight);
+
+                    // Update widget dimensions
+                    widget.width = newWidth;
+                    widget.height = newHeight;
+
+                    // Update visual size
+                    widgetEl.style.gridColumn = `${widget.x + 1} / span ${widget.width}`;
+                    widgetEl.style.gridRow = `${widget.y + 1} / span ${widget.height}`;
+                };
+
+                const onMouseUp = () => {
+                    widgetEl.classList.remove('resizing');
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    this.saveLayout();
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
             },
 
             addWidgetFromPalette() {
