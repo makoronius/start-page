@@ -7572,14 +7572,19 @@
             },
 
             createDefaultLayout() {
-                // Default layout with essential widgets (48-column grid)
-                this.addWidget('profile', 0, 0, 12, 1);
-                this.addWidget('title', 12, 0, 24, 1);
-                this.addWidget('clock', 36, 0, 12, 2);
-                this.addWidget('search', 0, 1, 16, 1);
-                this.addWidget('categories', 16, 1, 32, 1);
-                this.addWidget('services', 0, 2, 48, 4);
-                this.addWidget('weather', 36, 2, 12, 2);
+                // Improved default layout for 48-column grid
+                // Top row: Title centered with clock on right
+                this.addWidget('title', 0, 0, 36, 1);      // Title: full left side
+                this.addWidget('clock', 36, 0, 12, 2);      // Clock: right side, 2 rows tall
+
+                // Second row: Profile, search, and categories
+                this.addWidget('profile', 0, 1, 8, 1);      // Profile: compact left
+                this.addWidget('search', 8, 1, 12, 1);      // Search: next to profile
+                this.addWidget('categories', 20, 1, 16, 1); // Categories: center-right
+
+                // Main content area: Services and weather
+                this.addWidget('services', 0, 2, 36, 5);    // Services: large main area
+                this.addWidget('weather', 36, 2, 12, 3);    // Weather: right column, 3 rows
             },
 
             saveLayout() {
