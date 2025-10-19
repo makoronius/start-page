@@ -7341,8 +7341,27 @@
                         // Calculate grid position from drop coordinates
                         // Using finer grid (48 columns) for precise positioning
                         const rect = container.getBoundingClientRect();
-                        const x = Math.floor((e.clientX - rect.left) / (rect.width / 48));
-                        const y = Math.floor((e.clientY - rect.top) / 80);
+
+                        // Get computed style to get actual gap and padding values
+                        const style = window.getComputedStyle(container);
+                        const gap = parseFloat(style.gap) || 16; // Default to 16px (1rem)
+                        const padding = parseFloat(style.padding) || 16;
+
+                        // Calculate position accounting for padding and gaps
+                        const relativeX = e.clientX - rect.left - padding;
+                        const relativeY = e.clientY - rect.top - padding;
+
+                        // Calculate cell dimensions including gap
+                        const totalGridWidth = rect.width - 2 * padding;
+                        const totalGridHeight = rect.height - 2 * padding;
+
+                        // Account for gaps: width of each column = (total - gaps) / columns
+                        const cellWidth = (totalGridWidth - gap * 47) / 48;
+                        const cellHeight = 80; // Fixed row height
+
+                        // Calculate grid position (add gap to account for spacing between cells)
+                        const x = Math.max(0, Math.min(47, Math.floor(relativeX / (cellWidth + gap))));
+                        const y = Math.max(0, Math.floor(relativeY / (cellHeight + gap)));
 
                         if (widgetType) {
                             // Adding new widget from palette
