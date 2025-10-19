@@ -442,8 +442,8 @@ def generate_csv_to_server():
     """Generate CSV file and save to configured path on server"""
     try:
         config = load_config()
-        if not config or 'port_mappings' not in config:
-            return jsonify({"error": "No port mappings found in configuration"}), 404
+        if not config or 'services' not in config:
+            return jsonify({"error": "No services found in configuration"}), 404
 
         # Get settings
         settings = config.get('settings', {})
@@ -468,20 +468,21 @@ def generate_csv_to_server():
         else:
             backup_created = False
 
-        # Generate CSV content
+        # Generate CSV content from services that have a port defined
         output = io.StringIO()
         writer = csv.writer(output)
 
         # Write header
         writer.writerow(['Port', 'Service', 'Description'])
 
-        # Write port mappings
-        for mapping in config['port_mappings']:
-            writer.writerow([
-                mapping.get('port', ''),
-                mapping.get('service', ''),
-                mapping.get('description', '')
-            ])
+        # Write services that have a port field
+        for service in config['services']:
+            if 'port' in service and service.get('port'):
+                writer.writerow([
+                    service.get('port', ''),
+                    service.get('name', ''),
+                    service.get('description', '')
+                ])
 
         # Write to file
         csv_dir = os.path.dirname(csv_path)
@@ -502,11 +503,11 @@ def generate_csv_to_server():
 
 @app.route('/api/csv/download', methods=['GET'])
 def download_csv():
-    """Download CSV file from port mappings in config"""
+    """Download CSV file from services in config"""
     try:
         config = load_config()
-        if not config or 'port_mappings' not in config:
-            return jsonify({"error": "No port mappings found in configuration"}), 404
+        if not config or 'services' not in config:
+            return jsonify({"error": "No services found in configuration"}), 404
 
         # Create CSV in memory
         output = io.StringIO()
@@ -515,13 +516,14 @@ def download_csv():
         # Write header
         writer.writerow(['Port', 'Service', 'Description'])
 
-        # Write port mappings
-        for mapping in config['port_mappings']:
-            writer.writerow([
-                mapping.get('port', ''),
-                mapping.get('service', ''),
-                mapping.get('description', '')
-            ])
+        # Write services that have a port field
+        for service in config['services']:
+            if 'port' in service and service.get('port'):
+                writer.writerow([
+                    service.get('port', ''),
+                    service.get('name', ''),
+                    service.get('description', '')
+                ])
 
         # Convert to bytes
         output.seek(0)
@@ -541,8 +543,8 @@ def get_csv_content():
     """Get CSV content as text"""
     try:
         config = load_config()
-        if not config or 'port_mappings' not in config:
-            return jsonify({"error": "No port mappings found in configuration"}), 404
+        if not config or 'services' not in config:
+            return jsonify({"error": "No services found in configuration"}), 404
 
         # Create CSV in memory
         output = io.StringIO()
@@ -551,13 +553,14 @@ def get_csv_content():
         # Write header
         writer.writerow(['Port', 'Service', 'Description'])
 
-        # Write port mappings
-        for mapping in config['port_mappings']:
-            writer.writerow([
-                mapping.get('port', ''),
-                mapping.get('service', ''),
-                mapping.get('description', '')
-            ])
+        # Write services that have a port field
+        for service in config['services']:
+            if 'port' in service and service.get('port'):
+                writer.writerow([
+                    service.get('port', ''),
+                    service.get('name', ''),
+                    service.get('description', '')
+                ])
 
         return jsonify({"csv": output.getvalue()}), 200
     except Exception as e:
