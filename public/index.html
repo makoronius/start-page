@@ -2877,8 +2877,13 @@
     </div>
 
     <!-- Layout Mode Toggle Button -->
-    <div id="layout-mode-toggle" class="layout-mode-indicator" onclick="widgetSystem.toggleLayoutMode()" title="Toggle Widget/Classic Mode">
+    <div id="layout-mode-toggle" class="layout-mode-indicator" onclick="widgetSystem.toggleLayoutMode()" title="Toggle Widget/Classic Mode" style="display: none;">
         🧩
+    </div>
+
+    <!-- Edit Layout Button (shown in widget view mode) -->
+    <div id="edit-layout-btn" class="layout-mode-indicator" onclick="widgetSystem.enterEditMode()" title="Edit Layout" style="display: none; bottom: 5rem;">
+        ✏️
     </div>
 
     <!-- Widget Layout Container (hidden by default, shown when widget mode enabled) -->
@@ -6707,6 +6712,7 @@
             widgets: [],
             editMode: false,
             layoutMode: 'classic', // 'classic' or 'widget'
+            draggedWidgetId: null, // Track dragged widget for repositioning
 
             init() {
                 // Load layout mode from localStorage
@@ -6715,6 +6721,16 @@
 
                 if (this.layoutMode === 'widget') {
                     this.showWidgetLayout();
+                    // Start in view mode, show edit button
+                    const editBtn = document.getElementById('edit-layout-btn');
+                    if (editBtn) editBtn.style.display = 'flex';
+                } else {
+                    // Classic mode: show classic dashboard, hide widget stuff
+                    const dashboard = document.getElementById('main-dashboard');
+                    if (dashboard) dashboard.style.display = 'block';
+
+                    const toggle = document.getElementById('layout-mode-toggle');
+                    if (toggle) toggle.style.display = 'flex';
                 }
 
                 // Initialize drag and drop for palette
@@ -6733,39 +6749,56 @@
                 this.layoutMode = 'widget';
                 localStorage.setItem('layoutMode', 'widget');
 
-                // Hide classic dashboard
+                // Hide classic dashboard completely
                 const dashboard = document.getElementById('main-dashboard');
                 if (dashboard) dashboard.style.display = 'none';
 
-                // Show widget layout
+                // Show widget layout in view mode
                 this.showWidgetLayout();
+
+                // Enter edit mode to configure
                 this.enterEditMode();
 
-                showToast('Widget mode enabled! Drag widgets from the palette', 'success');
+                showToast('Widget mode enabled! Click ✓ Done when finished editing', 'success');
             },
 
             switchToClassicMode() {
                 this.layoutMode = 'classic';
                 localStorage.setItem('layoutMode', 'classic');
 
+                // Exit edit mode first
+                this.exitEditMode();
+
                 // Show classic dashboard
                 const dashboard = document.getElementById('main-dashboard');
                 if (dashboard) dashboard.style.display = 'block';
 
-                // Hide widget layout
+                // Hide widget layout completely
                 const container = document.getElementById('widget-layout-container');
                 if (container) container.style.display = 'none';
 
-                this.exitEditMode();
+                // Hide layout toggle button in classic mode
+                const toggle = document.getElementById('layout-mode-toggle');
+                if (toggle) toggle.style.display = 'none';
 
                 showToast('Classic mode enabled', 'success');
             },
 
             showWidgetLayout() {
+                // Hide classic dashboard
+                const dashboard = document.getElementById('main-dashboard');
+                if (dashboard) dashboard.style.display = 'none';
+
+                // Show widget container
                 const container = document.getElementById('widget-layout-container');
                 if (container) {
                     container.style.display = 'grid';
                 }
+
+                // Show layout toggle button
+                const toggle = document.getElementById('layout-mode-toggle');
+                if (toggle) toggle.style.display = 'flex';
+
                 this.renderWidgets();
             },
 
@@ -6773,6 +6806,10 @@
                 this.editMode = true;
                 document.getElementById('layout-editor-bar').classList.add('active');
                 document.getElementById('widget-palette').classList.add('active');
+
+                // Hide edit layout button
+                const editBtn = document.getElementById('edit-layout-btn');
+                if (editBtn) editBtn.style.display = 'none';
 
                 // Add edit mode class to all widgets
                 this.widgets.forEach(widget => {
@@ -6782,12 +6819,20 @@
                         el.draggable = true;
                     }
                 });
+
+                showToast('Edit mode: Drag widgets to reposition, grab handles to resize', 'info');
             },
 
             exitEditMode() {
                 this.editMode = false;
                 document.getElementById('layout-editor-bar').classList.remove('active');
                 document.getElementById('widget-palette').classList.remove('active');
+
+                // Show edit layout button (only in widget mode)
+                if (this.layoutMode === 'widget') {
+                    const editBtn = document.getElementById('edit-layout-btn');
+                    if (editBtn) editBtn.style.display = 'flex';
+                }
 
                 // Remove edit mode class from all widgets
                 this.widgets.forEach(widget => {
@@ -6799,6 +6844,7 @@
                 });
 
                 this.saveLayout();
+                showToast('Layout saved! Click ✏️ to edit again', 'success');
             },
 
             addWidget(type, x, y, width, height, settings = {}) {
@@ -6989,6 +7035,7 @@
                     pw.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('widget-type', pw.dataset.widgetType);
                         e.dataTransfer.effectAllowed = 'copy';
+                        this.draggedWidgetId = null; // Clear dragged widget (this is from palette)
                     });
                 });
 
@@ -6996,13 +7043,12 @@
                 if (container) {
                     container.addEventListener('dragover', (e) => {
                         e.preventDefault();
-                        e.dataTransfer.dropEffect = e.dataTransfer.getData('widget-id') ? 'move' : 'copy';
+                        e.dataTransfer.dropEffect = this.draggedWidgetId ? 'move' : 'copy';
                     });
 
                     container.addEventListener('drop', (e) => {
                         e.preventDefault();
                         const widgetType = e.dataTransfer.getData('widget-type');
-                        const widgetId = e.dataTransfer.getData('widget-id');
 
                         // Calculate grid position from drop coordinates
                         const rect = container.getBoundingClientRect();
@@ -7013,18 +7059,25 @@
                             // Adding new widget from palette
                             this.addWidget(widgetType, x, y);
                             showToast('Widget added', 'success');
-                        } else if (widgetId) {
+                        } else if (this.draggedWidgetId) {
                             // Moving existing widget
-                            this.moveWidget(widgetId, x, y);
+                            this.moveWidget(this.draggedWidgetId, x, y);
+                            showToast('Widget moved', 'success');
                         }
+
+                        this.draggedWidgetId = null;
                     });
                 }
             },
 
             handleWidgetDragStart(e, widget) {
-                if (!this.editMode) return;
-                e.dataTransfer.setData('widget-id', widget.id);
+                if (!this.editMode) {
+                    e.preventDefault();
+                    return;
+                }
+                this.draggedWidgetId = widget.id;
                 e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', widget.id); // Required for Firefox
                 e.target.classList.add('dragging');
             },
 
