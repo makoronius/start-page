@@ -1438,6 +1438,31 @@
             opacity: 0.7;
         }
 
+        /* Summer Night - Moon: Crescent moon instead of sun */
+        .particle.summer.moon {
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,1), rgba(240,245,255,0.95), rgba(230,240,255,0.9));
+            animation: float 20s infinite;
+            border-radius: 50%;
+            box-shadow:
+                0 0 20px rgba(230,240,255,0.9),
+                0 0 35px rgba(200,220,255,0.7),
+                0 0 50px rgba(180,210,255,0.5);
+            filter: brightness(1.3);
+            position: relative;
+        }
+
+        .particle.summer.moon::before {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            top: 5%;
+            left: 15%;
+            background: radial-gradient(circle, rgba(150,180,255,0.95), rgba(120,160,255,0.8));
+            border-radius: 50%;
+            box-shadow: inset 3px 3px 8px rgba(100,140,220,0.6);
+        }
+
         /* Autumn - Falling Leaves: Classic maple leaf shape with defined edges */
         .particle.autumn {
             background: linear-gradient(135deg,
@@ -4954,27 +4979,125 @@
                     ambientNoiseNode = noise;
 
                 } else if (type === 'ocean') {
-                    // Ocean: low frequency oscillations with noise
-                    const noise = createWhiteNoise();
-                    const filter = audioContext.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.value = 400;
+                    // Ocean: Realistic multi-layered ocean waves
 
-                    const lfo = audioContext.createOscillator();
-                    lfo.frequency.value = 0.2;
-                    const lfoGain = audioContext.createGain();
-                    lfoGain.gain.value = 100;
+                    // 1. Deep ocean rumble - bass foundation
+                    const deepRumble = createWhiteNoise();
+                    const deepFilter = audioContext.createBiquadFilter();
+                    deepFilter.type = 'lowpass';
+                    deepFilter.frequency.value = 120;
+                    deepFilter.Q.value = 2;
+                    const deepGain = audioContext.createGain();
+                    deepGain.gain.value = 0.25;
 
-                    lfo.connect(lfoGain);
-                    lfoGain.connect(filter.frequency);
+                    // Slow breathing LFO for depth
+                    const deepLFO = audioContext.createOscillator();
+                    deepLFO.frequency.value = 0.08;
+                    const deepLFOGain = audioContext.createGain();
+                    deepLFOGain.gain.value = 0.04;
+                    deepLFO.connect(deepLFOGain);
+                    deepLFOGain.connect(deepGain.gain);
 
-                    noise.connect(filter);
-                    filter.connect(ambientMasterGain);
+                    deepRumble.connect(deepFilter);
+                    deepFilter.connect(deepGain);
+                    deepGain.connect(ambientMasterGain);
+                    deepRumble.start(0);
+                    deepLFO.start(0);
+                    ambientOscillators.push(deepRumble, deepLFO);
 
-                    noise.start(0);
-                    lfo.start(0);
-                    ambientOscillators.push(noise, lfo);
-                    ambientNoiseNode = noise;
+                    // 2. Mid-range wave washing - main wave sound
+                    const midWave = createWhiteNoise();
+                    const midFilter = audioContext.createBiquadFilter();
+                    midFilter.type = 'bandpass';
+                    midFilter.frequency.value = 600;
+                    midFilter.Q.value = 1.5;
+                    const midGain = audioContext.createGain();
+                    midGain.gain.value = 0.15;
+
+                    // Wave swell LFO - rises and falls like waves
+                    const waveLFO = audioContext.createOscillator();
+                    waveLFO.frequency.value = 0.15;
+                    const waveLFOGain = audioContext.createGain();
+                    waveLFOGain.gain.value = 150;
+                    waveLFO.connect(waveLFOGain);
+                    waveLFOGain.connect(midFilter.frequency);
+
+                    // Amplitude modulation for wave surge
+                    const waveAmpLFO = audioContext.createOscillator();
+                    waveAmpLFO.frequency.value = 0.12;
+                    const waveAmpLFOGain = audioContext.createGain();
+                    waveAmpLFOGain.gain.value = 0.08;
+                    waveAmpLFO.connect(waveAmpLFOGain);
+                    waveAmpLFOGain.connect(midGain.gain);
+
+                    midWave.connect(midFilter);
+                    midFilter.connect(midGain);
+                    midGain.connect(ambientMasterGain);
+                    midWave.start(0);
+                    waveLFO.start(0);
+                    waveAmpLFO.start(0);
+                    ambientOscillators.push(midWave, waveLFO, waveAmpLFO);
+
+                    // 3. High-frequency foam/spray
+                    const foam = createWhiteNoise();
+                    const foamFilter = audioContext.createBiquadFilter();
+                    foamFilter.type = 'highpass';
+                    foamFilter.frequency.value = 2500;
+                    const foamGain = audioContext.createGain();
+                    foamGain.gain.value = 0.06;
+
+                    // Subtle foam variation
+                    const foamLFO = audioContext.createOscillator();
+                    foamLFO.frequency.value = 0.25;
+                    const foamLFOGain = audioContext.createGain();
+                    foamLFOGain.gain.value = 0.02;
+                    foamLFO.connect(foamLFOGain);
+                    foamLFOGain.connect(foamGain.gain);
+
+                    foam.connect(foamFilter);
+                    foamFilter.connect(foamGain);
+                    foamGain.connect(ambientMasterGain);
+                    foam.start(0);
+                    foamLFO.start(0);
+                    ambientOscillators.push(foam, foamLFO);
+
+                    // 4. Periodic wave crashes
+                    function createWaveCrash() {
+                        const crash = createWhiteNoise();
+                        const crashFilter = audioContext.createBiquadFilter();
+                        crashFilter.type = 'bandpass';
+                        crashFilter.frequency.value = 800 + Math.random() * 400;
+                        crashFilter.Q.value = 2;
+
+                        const crashGain = audioContext.createGain();
+                        const now = audioContext.currentTime;
+                        const duration = 1.5 + Math.random() * 1;
+
+                        // Wave crash envelope: slow rise, peak, slow decay
+                        crashGain.gain.setValueAtTime(0, now);
+                        crashGain.gain.linearRampToValueAtTime(0.25, now + 0.3);
+                        crashGain.gain.linearRampToValueAtTime(0.30, now + 0.6);
+                        crashGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                        crash.connect(crashFilter);
+                        crashFilter.connect(crashGain);
+                        crashGain.connect(ambientMasterGain);
+
+                        crash.start(now);
+                        crash.stop(now + duration + 0.1);
+                    }
+
+                    // Vary crash timing for natural feel
+                    function scheduleWaveCrash() {
+                        if (ambientOscillators.length > 0) {
+                            createWaveCrash();
+                        }
+                    }
+
+                    const crashInterval = setInterval(scheduleWaveCrash, 4000 + Math.random() * 3000);
+                    ambientOscillators.push({ stop: () => clearInterval(crashInterval) });
+
+                    ambientNoiseNode = deepRumble;
 
                 } else if (type === 'forest') {
                     // Forest: realistic bird chirping with multiple birds
@@ -5577,12 +5700,20 @@
 
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
-                particle.className = `particle ${timeClass} ${seasonClass}`;
+
+                // Special case: Summer night shows moons instead of suns
+                let specialClass = '';
+                if (seasonClass === 'summer' && timeClass === 'night') {
+                    specialClass = 'moon';
+                }
+
+                particle.className = `particle ${timeClass} ${seasonClass} ${specialClass}`;
 
                 // Size varies by season - increased for better visibility
                 let size;
                 if (seasonClass === 'winter') size = Math.random() * 12 + 8; // Snowflakes: 8-20px
-                else if (seasonClass === 'summer') size = Math.random() * 16 + 10; // Sun lights: 10-26px
+                else if (seasonClass === 'summer' && timeClass === 'night') size = Math.random() * 12 + 10; // Moons: 10-22px
+                else if (seasonClass === 'summer') size = Math.random() * 8 + 6; // Sun lights: 6-14px (reduced)
                 else if (seasonClass === 'autumn') size = Math.random() * 18 + 12; // Leaves: 12-30px
                 else size = Math.random() * 10 + 6; // Spring water drops: 6-16px
 
