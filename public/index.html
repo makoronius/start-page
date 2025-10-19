@@ -1322,7 +1322,7 @@
             height: 100%;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.25;
+            opacity: 0.40;
         }
 
         .particle {
@@ -1332,84 +1332,147 @@
             animation: float 20s infinite;
         }
 
-        /* Time of Day - Enhanced color distinction */
+        /* Time of Day - Dramatic color and intensity distinction */
+
+        /* Morning: Warm golden sunrise */
         .particle.morning {
-            background: radial-gradient(circle, rgba(255,223,0,0.8), rgba(255,165,0,0.6), rgba(255,200,100,0.4));
-            box-shadow: 0 0 15px rgba(255,223,0,0.6), 0 0 25px rgba(255,165,0,0.3);
+            background: radial-gradient(circle, rgba(255,230,50,1), rgba(255,180,0,0.9), rgba(255,200,80,0.5));
+            box-shadow: 0 0 20px rgba(255,200,0,0.9), 0 0 40px rgba(255,160,0,0.6);
+            filter: brightness(1.4) saturate(1.3);
         }
 
+        /* Afternoon: Bright clear white-blue */
         .particle.afternoon {
-            background: radial-gradient(circle, rgba(100,180,255,0.8), rgba(150,210,255,0.6), rgba(255,255,255,0.5));
-            box-shadow: 0 0 12px rgba(100,180,255,0.5), 0 0 20px rgba(150,210,255,0.3);
+            background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(180,220,255,0.8), rgba(200,230,255,0.6));
+            box-shadow: 0 0 15px rgba(200,230,255,0.7), 0 0 30px rgba(150,200,255,0.4);
+            filter: brightness(1.2) saturate(0.9);
         }
 
+        /* Evening: Deep orange-to-purple sunset */
         .particle.evening {
-            background: radial-gradient(circle, rgba(255,120,80,0.8), rgba(255,80,150,0.7), rgba(200,100,255,0.5));
-            box-shadow: 0 0 18px rgba(255,120,80,0.6), 0 0 30px rgba(255,80,150,0.4);
+            background: radial-gradient(circle, rgba(255,100,50,1), rgba(255,50,120,0.9), rgba(180,80,200,0.7));
+            box-shadow: 0 0 25px rgba(255,100,50,0.8), 0 0 45px rgba(255,50,120,0.6);
+            filter: brightness(1.3) saturate(1.5);
         }
 
+        /* Night: Deep blue-purple stars */
         .particle.night {
-            background: radial-gradient(circle, rgba(80,120,255,0.9), rgba(100,80,200,0.7), rgba(150,100,255,0.5));
-            box-shadow: 0 0 20px rgba(80,120,255,0.7), 0 0 35px rgba(100,80,200,0.5);
+            background: radial-gradient(circle, rgba(150,180,255,1), rgba(100,120,255,0.9), rgba(80,100,200,0.6));
+            box-shadow: 0 0 30px rgba(120,150,255,1), 0 0 50px rgba(80,120,255,0.7), 0 0 70px rgba(60,100,200,0.4);
+            filter: brightness(1.6) saturate(1.4);
         }
 
-        /* Seasons - Enhanced visual distinction with recognizable shapes */
+        /* Seasons - Redesigned for clear recognition */
 
-        /* Winter - Snowflakes: crystalline white with geometric pattern */
+        /* Winter - Snowflakes: Sharp 6-pointed crystalline snowflake */
         .particle.winter {
-            background: linear-gradient(45deg, rgba(255,255,255,0.95) 0%, rgba(230,240,255,0.9) 50%, rgba(255,255,255,0.95) 100%);
+            background: radial-gradient(circle, rgba(255,255,255,1), rgba(240,248,255,0.95), rgba(220,235,255,0.85));
             animation: winter-fall 15s infinite;
             border-radius: 0;
+            /* 6-pointed snowflake with sharp tips */
             clip-path: polygon(
-                50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%,
-                21% 91%, 32% 57%, 2% 35%, 39% 35%
+                50% 0%, 55% 25%, 75% 15%, 60% 40%, 85% 50%, 60% 60%,
+                75% 85%, 55% 75%, 50% 100%, 45% 75%, 25% 85%, 40% 60%,
+                15% 50%, 40% 40%, 25% 15%, 45% 25%
             );
-            box-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 15px rgba(200,220,255,0.6);
+            box-shadow:
+                0 0 12px rgba(255,255,255,1),
+                0 0 20px rgba(230,240,255,0.8),
+                0 0 30px rgba(200,220,255,0.5);
+            filter: brightness(1.2);
+            border: 1px solid rgba(255,255,255,0.6);
         }
 
-        /* Spring - Flower petals: pink/white delicate petals */
+        /* Spring - Water Droplets: Clear sparkly water drops */
         .particle.spring {
-            background: radial-gradient(ellipse, rgba(255,182,193,0.9), rgba(255,220,230,0.7), rgba(144,238,144,0.5));
+            background: radial-gradient(circle, rgba(180,230,255,0.95), rgba(220,245,255,0.8), rgba(200,240,255,0.6));
             animation: spring-float 12s infinite;
-            border-radius: 50% 0% 50% 0%;
-            box-shadow: 0 0 10px rgba(255,182,193,0.6), inset 0 0 5px rgba(255,255,255,0.5);
+            border-radius: 50% 50% 50% 0%;
+            transform: rotate(45deg);
+            box-shadow:
+                0 0 10px rgba(180,230,255,0.8),
+                0 0 18px rgba(150,210,255,0.5),
+                inset -3px -3px 8px rgba(255,255,255,0.6),
+                inset 3px 3px 6px rgba(100,180,230,0.3);
+            filter: brightness(1.3);
+            border: 1px solid rgba(200,240,255,0.7);
         }
 
         .particle.spring::before {
             content: '';
             position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,240,245,0.8), transparent 70%);
+            width: 40%;
+            height: 40%;
+            top: 15%;
+            left: 15%;
+            background: radial-gradient(circle, rgba(255,255,255,0.9), transparent 60%);
             border-radius: 50%;
+            transform: rotate(-45deg);
         }
 
-        /* Summer - Fireflies: bright golden glowing orbs */
+        /* Summer - Sun Rays: Bright radiating sun light beams */
         .particle.summer {
-            background: radial-gradient(circle, rgba(255,240,100,0.95), rgba(255,200,0,0.8), rgba(255,150,0,0.6), rgba(255,100,0,0.3));
+            background: radial-gradient(circle, rgba(255,250,150,1), rgba(255,230,100,0.95), rgba(255,200,50,0.8));
             animation: summer-glow 3s infinite, summer-wave 10s infinite;
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(255,220,0,0.8), 0 0 35px rgba(255,180,0,0.6), 0 0 50px rgba(255,150,0,0.4);
+            box-shadow:
+                0 0 25px rgba(255,240,100,1),
+                0 0 45px rgba(255,220,80,0.8),
+                0 0 65px rgba(255,200,50,0.6);
+            filter: brightness(1.5) saturate(1.3);
         }
 
-        /* Autumn - Falling leaves: orange/red leaf shapes */
+        .particle.summer::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background:
+                linear-gradient(0deg, transparent 48%, rgba(255,240,100,0.6) 49%, rgba(255,240,100,0.6) 51%, transparent 52%),
+                linear-gradient(45deg, transparent 48%, rgba(255,240,100,0.5) 49%, rgba(255,240,100,0.5) 51%, transparent 52%),
+                linear-gradient(90deg, transparent 48%, rgba(255,240,100,0.6) 49%, rgba(255,240,100,0.6) 51%, transparent 52%),
+                linear-gradient(135deg, transparent 48%, rgba(255,240,100,0.5) 49%, rgba(255,240,100,0.5) 51%, transparent 52%);
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        /* Autumn - Falling Leaves: Classic maple leaf shape with defined edges */
         .particle.autumn {
-            background: linear-gradient(135deg, rgba(220,100,0,0.9) 0%, rgba(180,60,0,0.85) 40%, rgba(150,50,20,0.8) 100%);
+            background: linear-gradient(135deg,
+                rgba(210,90,0,1) 0%,
+                rgba(180,60,0,0.95) 30%,
+                rgba(160,50,10,0.9) 60%,
+                rgba(140,40,0,0.85) 100%);
             animation: autumn-fall 14s infinite;
-            border-radius: 0% 50% 50% 50%;
-            clip-path: polygon(50% 0%, 80% 20%, 100% 50%, 80% 80%, 50% 100%, 30% 90%, 20% 50%, 30% 20%);
-            box-shadow: 0 0 8px rgba(220,100,0,0.6), inset -2px -2px 4px rgba(150,50,20,0.5);
+            /* Maple leaf shape */
+            clip-path: polygon(
+                50% 0%, 55% 20%, 70% 15%, 60% 35%, 80% 40%,
+                65% 50%, 85% 70%, 60% 65%, 50% 85%, 40% 65%,
+                15% 70%, 35% 50%, 20% 40%, 40% 35%, 30% 15%, 45% 20%
+            );
+            box-shadow:
+                0 0 10px rgba(210,90,0,0.7),
+                0 0 18px rgba(180,60,0,0.5),
+                inset -3px -3px 6px rgba(140,40,0,0.6);
+            filter: brightness(1.1) saturate(1.4);
+            border: 1px solid rgba(180,60,0,0.7);
         }
 
         .particle.autumn::before {
             content: '';
             position: absolute;
-            width: 40%;
-            height: 60%;
-            left: 30%;
-            top: 20%;
-            background: linear-gradient(90deg, transparent, rgba(255,150,50,0.4), transparent);
-            border-radius: 50%;
+            width: 50%;
+            height: 70%;
+            left: 25%;
+            top: 15%;
+            background: linear-gradient(180deg,
+                transparent 0%,
+                rgba(220,120,40,0.4) 30%,
+                rgba(220,120,40,0.3) 70%,
+                transparent 100%);
+            clip-path: polygon(50% 0%, 52% 100%, 48% 100%);
         }
 
         @keyframes float {
@@ -5516,12 +5579,12 @@
                 const particle = document.createElement('div');
                 particle.className = `particle ${timeClass} ${seasonClass}`;
 
-                // Size varies by season
+                // Size varies by season - increased for better visibility
                 let size;
-                if (seasonClass === 'winter') size = Math.random() * 6 + 3; // Snow
-                else if (seasonClass === 'summer') size = Math.random() * 8 + 4; // Sun splashes
-                else if (seasonClass === 'autumn') size = Math.random() * 10 + 5; // Leaves
-                else size = Math.random() * 4 + 2; // Spring sparkles
+                if (seasonClass === 'winter') size = Math.random() * 12 + 8; // Snowflakes: 8-20px
+                else if (seasonClass === 'summer') size = Math.random() * 16 + 10; // Sun lights: 10-26px
+                else if (seasonClass === 'autumn') size = Math.random() * 18 + 12; // Leaves: 12-30px
+                else size = Math.random() * 10 + 6; // Spring water drops: 6-16px
 
                 particle.style.width = size + 'px';
                 particle.style.height = size + 'px';
