@@ -1698,6 +1698,124 @@
             100% { transform: translateY(100vh) translateX(80px) rotate(360deg); opacity: 0.6; }
         }
 
+        /* Cockroach easter egg particles */
+        .cockroach {
+            position: fixed;
+            width: 20px;
+            height: 12px;
+            pointer-events: none;
+            z-index: 9999;
+            will-change: transform;
+        }
+
+        .cockroach-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center,
+                rgba(60,40,30,1) 0%,
+                rgba(40,25,20,0.95) 40%,
+                rgba(20,15,10,0.9) 100%);
+            border-radius: 50% 50% 40% 40%;
+            border: 1px solid rgba(30,20,15,0.8);
+            box-shadow:
+                inset 1px 1px 2px rgba(80,60,50,0.3),
+                0 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .cockroach-head {
+            position: absolute;
+            width: 40%;
+            height: 35%;
+            top: -20%;
+            left: 30%;
+            background: radial-gradient(circle, rgba(50,35,25,1), rgba(30,20,15,1));
+            border-radius: 50%;
+            border: 1px solid rgba(25,15,10,0.8);
+        }
+
+        .cockroach-antenna {
+            position: absolute;
+            width: 1px;
+            height: 8px;
+            background: rgba(40,30,25,0.9);
+            top: -25%;
+            transform-origin: bottom;
+        }
+
+        .cockroach-antenna.left {
+            left: 35%;
+            transform: rotate(-25deg);
+        }
+
+        .cockroach-antenna.right {
+            right: 35%;
+            transform: rotate(25deg);
+        }
+
+        .cockroach-legs {
+            position: absolute;
+            width: 140%;
+            height: 140%;
+            top: -20%;
+            left: -20%;
+        }
+
+        .cockroach-leg {
+            position: absolute;
+            width: 1px;
+            height: 10px;
+            background: rgba(35,25,20,0.85);
+            transform-origin: top;
+        }
+
+        .cockroach-leg.left-1 { left: 15%; top: 20%; transform: rotate(-60deg); }
+        .cockroach-leg.left-2 { left: 20%; top: 45%; transform: rotate(-50deg); }
+        .cockroach-leg.left-3 { left: 25%; top: 70%; transform: rotate(-40deg); }
+        .cockroach-leg.right-1 { right: 15%; top: 20%; transform: rotate(60deg); }
+        .cockroach-leg.right-2 { right: 20%; top: 45%; transform: rotate(50deg); }
+        .cockroach-leg.right-3 { right: 25%; top: 70%; transform: rotate(40deg); }
+
+        @keyframes cockroach-scuttle-left {
+            0% {
+                transform: translateX(120vw) translateY(0) rotate(-15deg) scale(1);
+                opacity: 1;
+            }
+            2% {
+                transform: translateX(115vw) translateY(-2px) rotate(-18deg) scale(1.05);
+            }
+            4% {
+                transform: translateX(110vw) translateY(2px) rotate(-12deg) scale(0.95);
+            }
+            100% {
+                transform: translateX(-100px) translateY(0) rotate(-15deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes cockroach-scuttle-right {
+            0% {
+                transform: translateX(-100px) translateY(0) rotate(15deg) scale(1) scaleX(-1);
+                opacity: 1;
+            }
+            2% {
+                transform: translateX(-90px) translateY(-2px) rotate(18deg) scale(1.05) scaleX(-1);
+            }
+            4% {
+                transform: translateX(-80px) translateY(2px) rotate(12deg) scale(0.95) scaleX(-1);
+            }
+            100% {
+                transform: translateX(120vw) translateY(0) rotate(15deg) scale(1) scaleX(-1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes cockroach-legs-wiggle {
+            0%, 100% { transform: scaleX(1); }
+            25% { transform: scaleX(0.85); }
+            50% { transform: scaleX(1.15); }
+            75% { transform: scaleX(0.9); }
+        }
+
         /* Emoji Picker */
         .emoji-categories {
             display: flex;
@@ -2323,6 +2441,12 @@
                 </label>
             </div>
 
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="cockroach-enabled" onchange="toggleCockroaches()" checked />
+                    Enable Cockroach Easter Egg 🪳 (Random + Click trigger in bottom-left corner)
+                </label>
+            </div>
 
             <div class="form-group">
                 <label>
@@ -2358,6 +2482,9 @@
 
     <!-- Background Particles -->
     <div id="bg-particles" class="bg-particles"></div>
+
+    <!-- Cockroach Easter Egg Trigger (bottom-left corner, hidden) -->
+    <div id="cockroach-trigger" style="position: fixed; bottom: 0; left: 0; width: 50px; height: 50px; z-index: 10000; cursor: crosshair; opacity: 0;" title="Click me 3 times!"></div>
 
     <script>
         let config = null;
@@ -5896,6 +6023,183 @@
             initParticles();
         }
 
+        // Cockroach easter egg
+        let cockroachEnabled = localStorage.getItem('cockroachEnabled') !== 'false'; // Default: enabled
+        let cockroachTimer = null;
+
+        function createCockroachSound() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Create a high-pitched squeaky scream
+            const now = audioContext.currentTime;
+            const duration = 0.3 + Math.random() * 0.2;
+
+            // Oscillator 1: High-pitched squeak (primary scream)
+            const osc1 = audioContext.createOscillator();
+            osc1.type = 'square';
+            const startFreq = 2000 + Math.random() * 1000;
+            osc1.frequency.setValueAtTime(startFreq, now);
+            osc1.frequency.exponentialRampToValueAtTime(startFreq * 1.3, now + 0.05);
+            osc1.frequency.exponentialRampToValueAtTime(startFreq * 0.7, now + duration);
+
+            // Oscillator 2: Lower screech for depth
+            const osc2 = audioContext.createOscillator();
+            osc2.type = 'sawtooth';
+            osc2.frequency.setValueAtTime(startFreq * 0.6, now);
+            osc2.frequency.exponentialRampToValueAtTime(startFreq * 0.8, now + duration);
+
+            // Filter for more realistic insect sound
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 2500;
+            filter.Q.value = 3;
+
+            // Gain envelope
+            const gain = audioContext.createGain();
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.08, now + 0.02); // Not too loud
+            gain.gain.linearRampToValueAtTime(0.06, now + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // Connect nodes
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioContext.destination);
+
+            // Start and stop
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + duration);
+            osc2.stop(now + duration);
+        }
+
+        function createCockroach() {
+            const cockroach = document.createElement('div');
+            cockroach.className = 'cockroach';
+
+            // Random vertical position (anywhere on screen)
+            const topPosition = Math.random() * (window.innerHeight - 50);
+            cockroach.style.top = topPosition + 'px';
+
+            // Random direction (left or right)
+            const goingLeft = Math.random() > 0.5;
+            const duration = 2 + Math.random() * 2; // 2-4 seconds to cross screen
+
+            cockroach.innerHTML = `
+                <div class="cockroach-body">
+                    <div class="cockroach-head">
+                        <div class="cockroach-antenna left"></div>
+                        <div class="cockroach-antenna right"></div>
+                    </div>
+                    <div class="cockroach-legs">
+                        <div class="cockroach-leg left-1"></div>
+                        <div class="cockroach-leg left-2"></div>
+                        <div class="cockroach-leg left-3"></div>
+                        <div class="cockroach-leg right-1"></div>
+                        <div class="cockroach-leg right-2"></div>
+                        <div class="cockroach-leg right-3"></div>
+                    </div>
+                </div>
+            `;
+
+            // Apply animation
+            if (goingLeft) {
+                cockroach.style.animation = `cockroach-scuttle-left ${duration}s linear`;
+            } else {
+                cockroach.style.animation = `cockroach-scuttle-right ${duration}s linear`;
+            }
+
+            // Add wiggle to legs
+            const legs = cockroach.querySelectorAll('.cockroach-leg');
+            legs.forEach(leg => {
+                leg.style.animation = `cockroach-legs-wiggle 0.1s infinite`;
+            });
+
+            document.body.appendChild(cockroach);
+
+            // Play scream sound
+            createCockroachSound();
+
+            // Remove after animation completes
+            setTimeout(() => {
+                cockroach.remove();
+            }, duration * 1000);
+        }
+
+        function spawnCockroaches(count = 1) {
+            if (!cockroachEnabled) return;
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    createCockroach();
+                }, i * (200 + Math.random() * 300)); // Stagger spawns
+            }
+        }
+
+        function startRandomCockroaches() {
+            // Clear existing timer
+            if (cockroachTimer) {
+                clearTimeout(cockroachTimer);
+            }
+
+            if (!cockroachEnabled) return;
+
+            // Schedule next cockroach event (random interval: 30-90 seconds)
+            const nextSpawn = 30000 + Math.random() * 60000;
+            cockroachTimer = setTimeout(() => {
+                // Spawn 1-3 cockroaches
+                const count = 1 + Math.floor(Math.random() * 3);
+                spawnCockroaches(count);
+                startRandomCockroaches(); // Schedule next event
+            }, nextSpawn);
+        }
+
+        function toggleCockroaches() {
+            cockroachEnabled = document.getElementById('cockroach-enabled')?.checked !== false;
+            localStorage.setItem('cockroachEnabled', cockroachEnabled);
+
+            if (cockroachEnabled) {
+                startRandomCockroaches();
+            } else {
+                if (cockroachTimer) {
+                    clearTimeout(cockroachTimer);
+                    cockroachTimer = null;
+                }
+            }
+        }
+
+        // Cockroach click trigger (bottom-left corner)
+        let cockroachClickCount = 0;
+        let cockroachClickTimer = null;
+
+        function initCockroachTrigger() {
+            const trigger = document.getElementById('cockroach-trigger');
+            if (!trigger) return;
+
+            trigger.addEventListener('click', () => {
+                if (!cockroachEnabled) return;
+
+                cockroachClickCount++;
+
+                // Reset count after 2 seconds
+                if (cockroachClickTimer) clearTimeout(cockroachClickTimer);
+                cockroachClickTimer = setTimeout(() => {
+                    cockroachClickCount = 0;
+                }, 2000);
+
+                // Trigger on 3 clicks
+                if (cockroachClickCount >= 3) {
+                    cockroachClickCount = 0;
+                    // Spawn a bunch of cockroaches!
+                    spawnCockroaches(5 + Math.floor(Math.random() * 5)); // 5-9 cockroaches
+                    showToast('🪳 COCKROACHES!!!', 'error');
+                }
+            });
+        }
+
         // Animations toggle
         function toggleAnimations() {
             const enabled = document.getElementById('animations-enabled').checked;
@@ -6084,6 +6388,22 @@
                 }
             } catch (e) {
                 console.log('Preference loading failed:', e);
+            }
+
+            // Initialize cockroach easter egg
+            try {
+                const cockroachCheckbox = document.getElementById('cockroach-enabled');
+                if (cockroachCheckbox) {
+                    const savedCockroach = localStorage.getItem('cockroachEnabled') !== 'false';
+                    cockroachCheckbox.checked = savedCockroach;
+                    cockroachEnabled = savedCockroach;
+                }
+                initCockroachTrigger();
+                if (cockroachEnabled) {
+                    startRandomCockroaches();
+                }
+            } catch (e) {
+                console.log('Cockroach initialization failed:', e);
             }
 
             // Auto-refresh
