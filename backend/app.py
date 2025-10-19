@@ -940,9 +940,10 @@ os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
 @login_required
 @limiter.limit("5 per hour")  # Limit AI generation to prevent abuse
 def generate_image():
-    """Generate an AI image from text description"""
+    """Generate an AI image from text description using local Stable Diffusion"""
     try:
-        from blossom_ai import Blossom
+        import requests
+        import base64
 
         data = request.get_json()
         description = data.get('description', '').strip()
@@ -956,27 +957,57 @@ def generate_image():
         user = get_current_user()
         username = user['username']
 
-        # Initialize Blossom AI
-        blossom = Blossom()
-
-        # Generate image
+        # Generate image using local Stable Diffusion WebUI API
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_desc = "".join(c for c in description[:50] if c.isalnum() or c in (' ', '-', '_')).strip().replace(' ', '_')
-        filename = f"{username}_{timestamp}_{safe_desc}.jpg"
+        filename = f"{username}_{timestamp}_{safe_desc}.png"
         filepath = os.path.join(GENERATED_IMAGES_DIR, filename)
 
-        # Generate and save image using Blossom AI
-        blossom.image.save(description, filepath)
+        # Prepare request to Stable Diffusion API
+        sd_url = "http://hypervisor:7860/sdapi/v1/txt2img"
+        payload = {
+            "prompt": description,
+            "negative_prompt": "low quality, blurry, distorted, ugly, bad anatomy",
+            "steps": 20,
+            "width": 512,
+            "height": 512,
+            "cfg_scale": 7,
+            "sampler_name": "DPM++ 2M Karras",
+            "seed": -1
+        }
+
+        # Call Stable Diffusion API
+        print(f"Generating image with SD: {description}")
+        response = requests.post(sd_url, json=payload, timeout=120)
+
+        if response.status_code != 200:
+            raise Exception(f"SD API returned status {response.status_code}: {response.text}")
+
+        result = response.json()
+
+        # Extract and save the generated image
+        if 'images' in result and len(result['images']) > 0:
+            image_data = base64.b64decode(result['images'][0])
+            with open(filepath, 'wb') as f:
+                f.write(image_data)
+        else:
+            raise Exception("No image data returned from SD API")
 
         # Save metadata (description/prompt) alongside the image
-        metadata_filename = filename.replace('.jpg', '.json')
+        metadata_filename = filename.replace('.png', '.json')
         metadata_filepath = os.path.join(GENERATED_IMAGES_DIR, metadata_filename)
         metadata = {
             'description': description,
             'username': username,
             'timestamp': timestamp,
             'filename': filename,
-            'created': datetime.now().isoformat()
+            'created': datetime.now().isoformat(),
+            'generator': 'stable-diffusion-webui',
+            'sd_params': {
+                'steps': payload['steps'],
+                'cfg_scale': payload['cfg_scale'],
+                'sampler': payload['sampler_name']
+            }
         }
         with open(metadata_filepath, 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -990,10 +1021,14 @@ def generate_image():
             "url": f"/api/tools/images/{filename}"
         }), 200
 
-    except ImportError:
-        return jsonify({"error": "Blossom AI library not installed"}), 500
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "Image generation timed out. Please try again."}), 504
+    except requests.exceptions.ConnectionError:
+        return jsonify({"error": "Cannot connect to Stable Diffusion service. Is it running?"}), 503
     except Exception as e:
         print(f"Image generation error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Failed to generate image: {str(e)}"}), 500
 
 @app.route('/api/tools/images', methods=['GET'])
