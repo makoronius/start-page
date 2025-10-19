@@ -2141,9 +2141,10 @@
             display: flex !important;
         }
 
-        /* Adjust padding when header is hidden */
+        /* Adjust padding and height when header is hidden */
         .widget:not(.editing) .widget-content {
             padding-top: 0;
+            height: 100% !important;
         }
 
         .widget-resize-handle.se {
@@ -7054,8 +7055,6 @@
                     this.startClockWidget(widget.id);
                 } else if (widget.type === 'weather') {
                     this.startWeatherWidget(widget.id);
-                } else if (widget.type === 'profile') {
-                    this.startProfileWidget(widget.id);
                 } else if (widget.type === 'title') {
                     this.startTitleWidget(widget.id);
                 } else if (widget.type === 'categories') {
@@ -7077,7 +7076,7 @@
                     },
                     profile: {
                         title: '👤 Profile',
-                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center;"><div id="' + widget.id + '-content"></div></div>'
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="btn" onclick="showProfile(event)" style="padding: 1rem 2rem; font-size: 1rem;">👤 Manage Profile</button></div>'
                     },
                     title: {
                         title: '📝 Title',
@@ -7561,6 +7560,63 @@
                 } catch (e) {
                     console.error('Failed to load widget layout:', e);
                 }
+            },
+
+            // Search Widget Handler
+            handleSearchInput(searchWidgetId) {
+                const searchInput = document.getElementById(searchWidgetId + '-search');
+                if (!searchInput) return;
+
+                const query = searchInput.value.toLowerCase().trim();
+
+                // Find all services widgets
+                const servicesWidgets = this.widgets.filter(w => w.type === 'services');
+
+                servicesWidgets.forEach(servicesWidget => {
+                    const container = document.getElementById(servicesWidget.id + '-grid');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    if (typeof config === 'undefined' || !config.services || config.services.length === 0) {
+                        container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No services configured</p>';
+                        return;
+                    }
+
+                    // Filter services by search query
+                    let filteredServices = config.services;
+
+                    if (query) {
+                        filteredServices = config.services.filter(service => {
+                            const nameMatch = service.name.toLowerCase().includes(query);
+                            const descMatch = service.description && service.description.toLowerCase().includes(query);
+                            const urlMatch = service.url && service.url.toLowerCase().includes(query);
+                            const categoryMatch = service.category && service.category.toLowerCase().includes(query);
+                            return nameMatch || descMatch || urlMatch || categoryMatch;
+                        });
+                    }
+
+                    if (filteredServices.length === 0) {
+                        container.innerHTML = `<p style="color: var(--text-secondary); padding: 1rem;">No services match "${query}"</p>`;
+                        return;
+                    }
+
+                    // Apply grid columns setting
+                    const gridColumns = config.settings?.grid_columns || 'auto';
+                    if (gridColumns === 'auto') {
+                        container.removeAttribute('data-columns');
+                    } else {
+                        container.setAttribute('data-columns', gridColumns);
+                    }
+
+                    // Render filtered services
+                    filteredServices.forEach(service => {
+                        if (typeof createServiceCard !== 'undefined') {
+                            const card = createServiceCard(service);
+                            container.appendChild(card);
+                        }
+                    });
+                });
             }
         };
 
