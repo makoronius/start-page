@@ -6789,6 +6789,9 @@
                 this.loadLayout();
 
                 if (this.layoutMode === 'widget') {
+                    // Ensure we start in view mode, NOT edit mode
+                    this.editMode = false;
+
                     this.showWidgetLayout();
                     // Start in view mode, show edit button and widget mode toggle
                     const editBtn = document.getElementById('edit-layout-btn');
@@ -6801,9 +6804,20 @@
                     const classicToggle = document.getElementById('layout-mode-toggle');
                     if (classicToggle) classicToggle.style.display = 'none';
                 } else {
-                    // Classic mode: show classic dashboard, hide widget stuff
+                    // Classic mode: show classic dashboard, hide ALL widget stuff
                     const dashboard = document.getElementById('main-dashboard');
                     if (dashboard) dashboard.style.display = 'block';
+
+                    // Hide widget layout container
+                    const container = document.getElementById('widget-layout-container');
+                    if (container) container.style.display = 'none';
+
+                    // Hide editor bar and palette
+                    const editorBar = document.getElementById('layout-editor-bar');
+                    if (editorBar) editorBar.classList.remove('active');
+
+                    const palette = document.getElementById('widget-palette');
+                    if (palette) palette.classList.remove('active');
 
                     // Show classic mode toggle (🧩)
                     const toggle = document.getElementById('layout-mode-toggle');
@@ -6837,6 +6851,9 @@
                 this.layoutMode = 'widget';
                 localStorage.setItem('layoutMode', 'widget');
 
+                // Ensure we're NOT in edit mode
+                this.editMode = false;
+
                 // Hide classic dashboard completely
                 const dashboard = document.getElementById('main-dashboard');
                 if (dashboard) dashboard.style.display = 'none';
@@ -6845,6 +6862,13 @@
                 const classicToggle = document.getElementById('layout-mode-toggle');
                 if (classicToggle) classicToggle.style.display = 'none';
 
+                // Hide editor bar and palette (make sure they're hidden)
+                const editorBar = document.getElementById('layout-editor-bar');
+                if (editorBar) editorBar.classList.remove('active');
+
+                const palette = document.getElementById('widget-palette');
+                if (palette) palette.classList.remove('active');
+
                 // Show widget layout in view mode (not edit mode)
                 this.showWidgetLayout();
 
@@ -6852,7 +6876,7 @@
                 const editBtn = document.getElementById('edit-layout-btn');
                 if (editBtn) editBtn.style.display = 'flex';
 
-                // Show widget mode toggle (🧩 button to go back to classic)
+                // Show widget mode toggle (📋 button to go back to classic)
                 const widgetToggle = document.getElementById('widget-mode-toggle');
                 if (widgetToggle) widgetToggle.style.display = 'flex';
 
@@ -7004,9 +7028,13 @@
                 el.style.gridColumn = `${widget.x + 1} / span ${widget.width}`;
                 el.style.gridRow = `${widget.y + 1} / span ${widget.height}`;
 
+                // Set edit mode state - only add editing class if in edit mode
                 if (this.editMode) {
                     el.draggable = true;
                     el.classList.add('editing');
+                } else {
+                    el.draggable = false;
+                    // Don't add editing class (element is fresh, no need to remove)
                 }
 
                 // Add widget content based on type
