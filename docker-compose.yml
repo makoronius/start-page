@@ -13,6 +13,7 @@ services:
       - ./config.yaml:/app/config.yaml
       - ./users.yaml:/app/users.yaml
       - ./logs:/app/logs
+      - ./generated_images:/app/generated_images
       - ./scripts:/scripts:ro
       - /mnt/c/Scripts:/mnt/c/Scripts
     environment:

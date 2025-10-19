@@ -10,6 +10,7 @@ import csv
 import io
 import json
 from datetime import datetime, timedelta
+from pathlib import Path
 from auth import (
     login_required, admin_required, authenticate_user,
     get_current_user, get_user_categories, is_local_request,
@@ -927,6 +928,146 @@ def delete_category(name):
             return jsonify({"error": "Failed to delete category"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+# AI Tools - Image Generation
+GENERATED_IMAGES_DIR = '/app/generated_images'
+os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
+
+@app.route('/api/tools/generate-image', methods=['POST'])
+@login_required
+@limiter.limit("5 per hour")  # Limit AI generation to prevent abuse
+def generate_image():
+    """Generate an AI image from text description"""
+    try:
+        from blossom_ai import Blossom
+
+        data = request.get_json()
+        description = data.get('description', '').strip()
+
+        if not description:
+            return jsonify({"error": "Description is required"}), 400
+
+        if len(description) > 500:
+            return jsonify({"error": "Description too long (max 500 characters)"}), 400
+
+        user = get_current_user()
+        username = user['username']
+
+        # Initialize Blossom AI
+        blossom = Blossom()
+
+        # Generate image
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_desc = "".join(c for c in description[:50] if c.isalnum() or c in (' ', '-', '_')).strip().replace(' ', '_')
+        filename = f"{username}_{timestamp}_{safe_desc}.png"
+        filepath = os.path.join(GENERATED_IMAGES_DIR, filename)
+
+        # Generate and save image
+        image = blossom.generate(description)
+        image.save(filepath)
+
+        audit_log('ai_image_generated', username=username, details={'description': description, 'filename': filename})
+
+        return jsonify({
+            "success": True,
+            "message": "Image generated successfully!",
+            "filename": filename,
+            "url": f"/api/tools/images/{filename}"
+        }), 200
+
+    except ImportError:
+        return jsonify({"error": "Blossom AI library not installed"}), 500
+    except Exception as e:
+        print(f"Image generation error: {e}")
+        return jsonify({"error": f"Failed to generate image: {str(e)}"}), 500
+
+@app.route('/api/tools/images', methods=['GET'])
+@login_required
+def list_generated_images():
+    """List all generated images with metadata"""
+    try:
+        user = get_current_user()
+        username = user['username']
+        is_admin = user.get('is_admin', False)
+
+        images = []
+
+        if os.path.exists(GENERATED_IMAGES_DIR):
+            for filename in os.listdir(GENERATED_IMAGES_DIR):
+                if filename.endswith(('.png', '.jpg', '.jpeg')):
+                    # Check if user owns this image or is admin
+                    if is_admin or filename.startswith(f"{username}_"):
+                        filepath = os.path.join(GENERATED_IMAGES_DIR, filename)
+                        stat = os.stat(filepath)
+
+                        # Parse filename to extract info
+                        parts = filename.rsplit('_', 2)
+                        image_username = parts[0] if len(parts) >= 3 else 'unknown'
+
+                        images.append({
+                            'filename': filename,
+                            'url': f"/api/tools/images/{filename}",
+                            'size': stat.st_size,
+                            'created': datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                            'username': image_username
+                        })
+
+        # Sort by creation date, newest first
+        images.sort(key=lambda x: x['created'], reverse=True)
+
+        return jsonify(images), 200
+    except Exception as e:
+        print(f"Error listing images: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/tools/images/<filename>', methods=['GET'])
+@login_required
+def get_generated_image(filename):
+    """Get a specific generated image"""
+    try:
+        user = get_current_user()
+        username = user['username']
+        is_admin = user.get('is_admin', False)
+
+        # Security: Check if user owns this image or is admin
+        if not is_admin and not filename.startswith(f"{username}_"):
+            return jsonify({"error": "Access denied"}), 403
+
+        filepath = os.path.join(GENERATED_IMAGES_DIR, filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({"error": "Image not found"}), 404
+
+        return send_file(filepath, mimetype='image/png')
+    except Exception as e:
+        print(f"Error getting image: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/tools/images/<filename>', methods=['DELETE'])
+@login_required
+def delete_generated_image(filename):
+    """Delete a generated image"""
+    try:
+        user = get_current_user()
+        username = user['username']
+        is_admin = user.get('is_admin', False)
+
+        # Security: Check if user owns this image or is admin
+        if not is_admin and not filename.startswith(f"{username}_"):
+            return jsonify({"error": "Access denied"}), 403
+
+        filepath = os.path.join(GENERATED_IMAGES_DIR, filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({"error": "Image not found"}), 404
+
+        os.remove(filepath)
+        audit_log('ai_image_deleted', username=username, details={'filename': filename})
+
+        return jsonify({"success": True, "message": "Image deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error deleting image: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # Log application startup

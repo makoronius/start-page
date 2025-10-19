@@ -31,3 +31,6 @@ public/index.html.backup
 # User configuration files (use .example templates instead)
 config.yaml
 users.yaml
+
+# AI generated images
+generated_images/

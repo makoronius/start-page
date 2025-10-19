@@ -1533,6 +1533,7 @@
         <div class="tabs">
             <button id="favourites-tab-btn" class="tab-btn" onclick="switchToFavourites()" style="display: none;">⭐ Favourites</button>
             <div id="category-tabs" class="category-tabs"></div>
+            <button id="tools-tab-btn" class="tab-btn" onclick="switchTab('tools')">🛠️ Tools</button>
             <button id="config-tab-btn" class="tab-btn" onclick="switchTab('config')" style="display: none;">Config</button>
         </div>
 
@@ -1550,6 +1551,72 @@
                 <p>Loading services...</p>
             </div>
             <div id="services-grid" class="services-grid"></div>
+        </div>
+
+        <div id="tools-tab" class="tab-content">
+            <h2 style="margin-bottom: 1.5rem;">🛠️ Fun Tools</h2>
+
+            <!-- AI Image Generator -->
+            <div style="background: var(--bg-card); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px var(--shadow);">
+                <h3 style="margin-top: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 2rem;">🎨</span>
+                    AI Image Generator
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Generate unique images using AI based on your description. Limited to 5 generations per hour.
+                </p>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="ai-image-prompt">Describe the image you want to create</label>
+                    <textarea
+                        id="ai-image-prompt"
+                        rows="4"
+                        placeholder="e.g., A serene mountain landscape at sunset with a lake reflection, photorealistic style..."
+                        maxlength="500"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--input-bg); color: var(--text-primary); font-family: inherit; resize: vertical;"
+                    ></textarea>
+                    <div style="text-align: right; font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                        <span id="prompt-char-count">0</span> / 500 characters
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-primary" onclick="generateAIImage()" id="generate-btn">
+                        🎨 Generate Image
+                    </button>
+                    <div id="generation-status" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+                </div>
+
+                <div id="generated-image-preview" style="margin-top: 1.5rem; display: none;">
+                    <h4 style="margin-bottom: 1rem;">Generated Image:</h4>
+                    <img id="preview-image" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px var(--shadow);" />
+                    <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+                        <button class="btn btn-secondary" onclick="downloadGeneratedImage()">📥 Download</button>
+                        <button class="btn btn-secondary" onclick="loadImageGallery()">🖼️ View Gallery</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Gallery -->
+            <div style="background: var(--bg-card); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px var(--shadow);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 2rem;">🖼️</span>
+                        Image Gallery
+                    </h3>
+                    <button class="btn btn-secondary" onclick="loadImageGallery()">🔄 Refresh</button>
+                </div>
+
+                <div id="image-gallery-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <!-- Images will be loaded here -->
+                </div>
+
+                <div id="gallery-empty" style="text-align: center; padding: 3rem; color: var(--text-secondary); display: none;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📷</div>
+                    <div style="font-size: 1.2rem; font-weight: 500; margin-bottom: 0.5rem;">No images yet</div>
+                    <div style="font-size: 0.95rem;">Generate your first AI image above!</div>
+                </div>
+            </div>
         </div>
 
         <div id="config-tab" class="tab-content">
@@ -2717,6 +2784,10 @@
                 renderServicesByCategory_Config();
             }
 
+            if (tabName === 'tools') {
+                loadImageGallery();
+            }
+
             // Save state
             saveState();
         }
@@ -3666,6 +3737,240 @@
             playSound('click');
             document.getElementById('folder-browser-modal').classList.add('hidden');
             currentBrowserInputId = null;
+        }
+
+        // AI Tools - Image Generation
+        let currentGeneratedImage = null;
+
+        // Character counter for prompt
+        document.addEventListener('DOMContentLoaded', function() {
+            const promptInput = document.getElementById('ai-image-prompt');
+            if (promptInput) {
+                promptInput.addEventListener('input', function() {
+                    document.getElementById('prompt-char-count').textContent = this.value.length;
+                });
+            }
+        });
+
+        async function generateAIImage() {
+            const promptInput = document.getElementById('ai-image-prompt');
+            const description = promptInput.value.trim();
+
+            if (!description) {
+                showToast('Please enter a description for the image', 'error');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generate-btn');
+            const statusDiv = document.getElementById('generation-status');
+            const previewDiv = document.getElementById('generated-image-preview');
+
+            try {
+                // Disable button and show status
+                generateBtn.disabled = true;
+                generateBtn.textContent = '⏳ Generating...';
+                statusDiv.textContent = 'Generating image with AI... This may take a moment.';
+                previewDiv.style.display = 'none';
+
+                playSound('click');
+
+                const response = await fetch('/api/tools/generate-image', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to generate image');
+                }
+
+                const data = await response.json();
+                currentGeneratedImage = data.filename;
+
+                // Show preview
+                const previewImage = document.getElementById('preview-image');
+                previewImage.src = data.url + '?t=' + Date.now();
+                previewDiv.style.display = 'block';
+
+                statusDiv.textContent = '';
+                showToast('Image generated successfully!', 'success');
+
+                // Reload gallery
+                await loadImageGallery();
+
+            } catch (error) {
+                console.error('Image generation error:', error);
+                statusDiv.textContent = '';
+                showToast(`Failed to generate image: ${error.message}`, 'error');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎨 Generate Image';
+            }
+        }
+
+        async function loadImageGallery() {
+            const container = document.getElementById('image-gallery-container');
+            const emptyDiv = document.getElementById('gallery-empty');
+
+            try {
+                playSound('click');
+
+                const response = await fetch('/api/tools/images', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load images');
+                }
+
+                const images = await response.json();
+
+                if (images.length === 0) {
+                    container.innerHTML = '';
+                    container.style.display = 'none';
+                    emptyDiv.style.display = 'block';
+                    return;
+                }
+
+                container.style.display = 'grid';
+                emptyDiv.style.display = 'none';
+                container.innerHTML = '';
+
+                images.forEach(image => {
+                    const imageCard = document.createElement('div');
+                    imageCard.style.cssText = 'background: var(--input-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px var(--shadow); transition: transform 0.2s;';
+                    imageCard.onmouseenter = function() { this.style.transform = 'translateY(-4px)'; };
+                    imageCard.onmouseleave = function() { this.style.transform = 'translateY(0)'; };
+
+                    const img = document.createElement('img');
+                    img.src = image.url + '?t=' + Date.now();
+                    img.style.cssText = 'width: 100%; height: 200px; object-fit: cover; cursor: pointer;';
+                    img.onclick = () => viewImageFullscreen(image.url);
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.style.cssText = 'padding: 1rem;';
+
+                    const dateSpan = document.createElement('div');
+                    dateSpan.textContent = new Date(image.created).toLocaleString();
+                    dateSpan.style.cssText = 'font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;';
+
+                    const sizeSpan = document.createElement('div');
+                    sizeSpan.textContent = `${(image.size / 1024).toFixed(1)} KB`;
+                    sizeSpan.style.cssText = 'font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;';
+
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.style.cssText = 'display: flex; gap: 0.5rem;';
+
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = 'btn btn-secondary';
+                    downloadBtn.textContent = '📥';
+                    downloadBtn.style.cssText = 'flex: 1; padding: 0.5rem;';
+                    downloadBtn.onclick = () => downloadImage(image.filename, image.url);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-danger';
+                    deleteBtn.textContent = '🗑️';
+                    deleteBtn.style.cssText = 'flex: 1; padding: 0.5rem;';
+                    deleteBtn.onclick = () => deleteImage(image.filename);
+
+                    actionsDiv.appendChild(downloadBtn);
+                    actionsDiv.appendChild(deleteBtn);
+
+                    infoDiv.appendChild(dateSpan);
+                    infoDiv.appendChild(sizeSpan);
+                    infoDiv.appendChild(actionsDiv);
+
+                    imageCard.appendChild(img);
+                    imageCard.appendChild(infoDiv);
+
+                    container.appendChild(imageCard);
+                });
+
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                showToast('Failed to load image gallery', 'error');
+            }
+        }
+
+        function viewImageFullscreen(imageUrl) {
+            playSound('click');
+            window.open(imageUrl, '_blank');
+        }
+
+        function downloadGeneratedImage() {
+            if (currentGeneratedImage) {
+                downloadImage(currentGeneratedImage, `/api/tools/images/${currentGeneratedImage}`);
+            }
+        }
+
+        async function downloadImage(filename, url) {
+            try {
+                playSound('click');
+
+                const response = await fetch(url, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to download image');
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+
+                showToast('Image downloaded!', 'success');
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('Failed to download image', 'error');
+            }
+        }
+
+        async function deleteImage(filename) {
+            const confirmed = await customConfirm(
+                `Are you sure you want to delete this image? This action cannot be undone.`,
+                'Delete Image',
+                'warning'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                playSound('click');
+
+                const response = await fetch(`/api/tools/images/${filename}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to delete image');
+                }
+
+                showToast('Image deleted successfully', 'success');
+
+                // Reload gallery
+                await loadImageGallery();
+
+                // Hide preview if it's the deleted image
+                if (currentGeneratedImage === filename) {
+                    document.getElementById('generated-image-preview').style.display = 'none';
+                    currentGeneratedImage = null;
+                }
+
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast(`Failed to delete image: ${error.message}`, 'error');
+            }
         }
 
         // User Management
