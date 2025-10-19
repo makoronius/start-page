@@ -1897,6 +1897,11 @@
             overflow: auto;
         }
 
+        /* In view mode, hide overflow to prevent scrollbars */
+        .widget:not(.editing) .widget-content {
+            overflow: hidden;
+        }
+
         /* Clock Widget */
         .clock-widget {
             text-align: center;
