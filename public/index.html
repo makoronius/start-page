@@ -6796,10 +6796,18 @@
                     this.showWidgetLayout();
                     // Start in view mode, show edit button and widget mode toggle
                     const editBtn = document.getElementById('edit-layout-btn');
-                    if (editBtn) editBtn.style.display = 'flex';
+                    if (editBtn) {
+                        editBtn.style.display = 'flex';
+                        editBtn.style.visibility = 'visible';
+                        editBtn.style.opacity = '1';
+                    }
 
                     const widgetToggle = document.getElementById('widget-mode-toggle');
-                    if (widgetToggle) widgetToggle.style.display = 'flex';
+                    if (widgetToggle) {
+                        widgetToggle.style.display = 'flex';
+                        widgetToggle.style.visibility = 'visible';
+                        widgetToggle.style.opacity = '1';
+                    }
 
                     // Hide classic mode toggle
                     const classicToggle = document.getElementById('layout-mode-toggle');
@@ -6875,11 +6883,19 @@
 
                 // Show edit button so user can enter edit mode
                 const editBtn = document.getElementById('edit-layout-btn');
-                if (editBtn) editBtn.style.display = 'flex';
+                if (editBtn) {
+                    editBtn.style.display = 'flex';
+                    editBtn.style.visibility = 'visible';
+                    editBtn.style.opacity = '1';
+                }
 
                 // Show widget mode toggle (📋 button to go back to classic)
                 const widgetToggle = document.getElementById('widget-mode-toggle');
-                if (widgetToggle) widgetToggle.style.display = 'flex';
+                if (widgetToggle) {
+                    widgetToggle.style.display = 'flex';
+                    widgetToggle.style.visibility = 'visible';
+                    widgetToggle.style.opacity = '1';
+                }
 
                 showToast('Widget mode enabled! Click ✏️ to edit layout', 'success');
             },
@@ -6966,11 +6982,19 @@
                 // Show edit layout button (only in widget mode)
                 if (this.layoutMode === 'widget') {
                     const editBtn = document.getElementById('edit-layout-btn');
-                    if (editBtn) editBtn.style.display = 'flex';
+                    if (editBtn) {
+                        editBtn.style.display = 'flex';
+                        editBtn.style.visibility = 'visible';
+                        editBtn.style.opacity = '1';
+                    }
 
                     // Show widget mode toggle button to switch back to classic
                     const widgetToggle = document.getElementById('widget-mode-toggle');
-                    if (widgetToggle) widgetToggle.style.display = 'flex';
+                    if (widgetToggle) {
+                        widgetToggle.style.display = 'flex';
+                        widgetToggle.style.visibility = 'visible';
+                        widgetToggle.style.opacity = '1';
+                    }
                 }
 
                 // Remove edit mode class from all widgets
