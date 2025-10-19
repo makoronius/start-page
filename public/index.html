@@ -1322,7 +1322,7 @@
             height: 100%;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.15;
+            opacity: 0.25;
         }
 
         .particle {
@@ -1332,50 +1332,84 @@
             animation: float 20s infinite;
         }
 
+        /* Time of Day - Enhanced color distinction */
         .particle.morning {
-            background: radial-gradient(circle, rgba(255,215,0,0.6), rgba(255,140,0,0.4));
-            box-shadow: 0 0 8px rgba(255,215,0,0.3);
+            background: radial-gradient(circle, rgba(255,223,0,0.8), rgba(255,165,0,0.6), rgba(255,200,100,0.4));
+            box-shadow: 0 0 15px rgba(255,223,0,0.6), 0 0 25px rgba(255,165,0,0.3);
         }
 
         .particle.afternoon {
-            background: radial-gradient(circle, rgba(135,206,250,0.6), rgba(255,255,255,0.4));
-            box-shadow: 0 0 6px rgba(135,206,250,0.3);
+            background: radial-gradient(circle, rgba(100,180,255,0.8), rgba(150,210,255,0.6), rgba(255,255,255,0.5));
+            box-shadow: 0 0 12px rgba(100,180,255,0.5), 0 0 20px rgba(150,210,255,0.3);
         }
 
         .particle.evening {
-            background: radial-gradient(circle, rgba(255,140,105,0.6), rgba(255,105,180,0.4));
-            box-shadow: 0 0 10px rgba(255,140,105,0.4);
+            background: radial-gradient(circle, rgba(255,120,80,0.8), rgba(255,80,150,0.7), rgba(200,100,255,0.5));
+            box-shadow: 0 0 18px rgba(255,120,80,0.6), 0 0 30px rgba(255,80,150,0.4);
         }
 
         .particle.night {
-            background: radial-gradient(circle, rgba(100,149,237,0.6), rgba(138,43,226,0.4));
-            box-shadow: 0 0 12px rgba(138,43,226,0.5);
+            background: radial-gradient(circle, rgba(80,120,255,0.9), rgba(100,80,200,0.7), rgba(150,100,255,0.5));
+            box-shadow: 0 0 20px rgba(80,120,255,0.7), 0 0 35px rgba(100,80,200,0.5);
         }
 
+        /* Seasons - Enhanced visual distinction with recognizable shapes */
+
+        /* Winter - Snowflakes: crystalline white with geometric pattern */
         .particle.winter {
-            background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(200,220,255,0.7));
+            background: linear-gradient(45deg, rgba(255,255,255,0.95) 0%, rgba(230,240,255,0.9) 50%, rgba(255,255,255,0.95) 100%);
             animation: winter-fall 15s infinite;
-            border-radius: 50%;
+            border-radius: 0;
+            clip-path: polygon(
+                50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%,
+                21% 91%, 32% 57%, 2% 35%, 39% 35%
+            );
+            box-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 15px rgba(200,220,255,0.6);
         }
 
+        /* Spring - Flower petals: pink/white delicate petals */
         .particle.spring {
-            background: radial-gradient(circle, rgba(255,182,193,0.7), rgba(144,238,144,0.6));
+            background: radial-gradient(ellipse, rgba(255,182,193,0.9), rgba(255,220,230,0.7), rgba(144,238,144,0.5));
             animation: spring-float 12s infinite;
+            border-radius: 50% 0% 50% 0%;
+            box-shadow: 0 0 10px rgba(255,182,193,0.6), inset 0 0 5px rgba(255,255,255,0.5);
+        }
+
+        .particle.spring::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,240,245,0.8), transparent 70%);
             border-radius: 50%;
         }
 
+        /* Summer - Fireflies: bright golden glowing orbs */
         .particle.summer {
-            background: radial-gradient(circle, rgba(255,215,0,0.8), rgba(255,165,0,0.6), rgba(255,100,50,0.4));
-            animation: summer-wave 10s infinite;
-            border-radius: 40% 60% 50% 50%;
-            box-shadow: 0 0 15px rgba(255,200,0,0.5);
+            background: radial-gradient(circle, rgba(255,240,100,0.95), rgba(255,200,0,0.8), rgba(255,150,0,0.6), rgba(255,100,0,0.3));
+            animation: summer-glow 3s infinite, summer-wave 10s infinite;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255,220,0,0.8), 0 0 35px rgba(255,180,0,0.6), 0 0 50px rgba(255,150,0,0.4);
         }
 
+        /* Autumn - Falling leaves: orange/red leaf shapes */
         .particle.autumn {
-            background: radial-gradient(circle, rgba(255,140,0,0.7), rgba(205,92,92,0.6));
+            background: linear-gradient(135deg, rgba(220,100,0,0.9) 0%, rgba(180,60,0,0.85) 40%, rgba(150,50,20,0.8) 100%);
             animation: autumn-fall 14s infinite;
             border-radius: 0% 50% 50% 50%;
-            transform: rotate(45deg);
+            clip-path: polygon(50% 0%, 80% 20%, 100% 50%, 80% 80%, 50% 100%, 30% 90%, 20% 50%, 30% 20%);
+            box-shadow: 0 0 8px rgba(220,100,0,0.6), inset -2px -2px 4px rgba(150,50,20,0.5);
+        }
+
+        .particle.autumn::before {
+            content: '';
+            position: absolute;
+            width: 40%;
+            height: 60%;
+            left: 30%;
+            top: 20%;
+            background: linear-gradient(90deg, transparent, rgba(255,150,50,0.4), transparent);
+            border-radius: 50%;
         }
 
         @keyframes float {
@@ -1400,16 +1434,27 @@
         }
 
         @keyframes summer-wave {
-            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); border-radius: 40% 60% 50% 50%; }
-            25% { transform: translateY(-50px) translateX(30px) rotate(45deg) scale(1.2); border-radius: 60% 40% 60% 40%; }
-            50% { transform: translateY(-30px) translateX(-30px) rotate(90deg) scale(0.9); border-radius: 50% 50% 40% 60%; }
-            75% { transform: translateY(-70px) translateX(20px) rotate(135deg) scale(1.1); border-radius: 40% 60% 50% 50%; }
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-50px) translateX(30px) rotate(45deg) scale(1.1); }
+            50% { transform: translateY(-30px) translateX(-30px) rotate(90deg) scale(0.95); }
+            75% { transform: translateY(-70px) translateX(20px) rotate(135deg) scale(1.05); }
+        }
+
+        @keyframes summer-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255,220,0,0.8), 0 0 35px rgba(255,180,0,0.6), 0 0 50px rgba(255,150,0,0.4);
+                opacity: 0.9;
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(255,240,0,1), 0 0 50px rgba(255,200,0,0.8), 0 0 70px rgba(255,180,0,0.6);
+                opacity: 1;
+            }
         }
 
         @keyframes autumn-fall {
-            0% { transform: translateY(-20px) translateX(0) rotate(45deg); opacity: 0; }
+            0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
-            100% { transform: translateY(100vh) translateX(100px) rotate(405deg); opacity: 0.5; }
+            100% { transform: translateY(100vh) translateX(80px) rotate(360deg); opacity: 0.6; }
         }
 
         /* Emoji Picker */
