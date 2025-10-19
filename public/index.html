@@ -2131,14 +2131,14 @@
             opacity: 1 !important;
         }
 
-        /* Hide widget controls in view mode */
-        .widget:not(.editing) .widget-controls {
+        /* Hide widget controls and header in view mode */
+        .widget:not(.editing) .widget-header {
             display: none;
         }
 
-        .widget:not(.editing) .widget-header {
-            padding-bottom: 0;
-            border-bottom: none;
+        /* Adjust padding when header is hidden */
+        .widget:not(.editing) .widget-content {
+            padding-top: 0;
         }
 
         .widget-resize-handle.se {
@@ -2895,6 +2895,11 @@
     <!-- Edit Layout Button (shown in widget view mode) -->
     <div id="edit-layout-btn" class="layout-mode-indicator" onclick="widgetSystem.enterEditMode()" title="Edit Layout" style="display: none; bottom: 5rem;">
         ✏️
+    </div>
+
+    <!-- Widget Mode Toggle (shown in widget view mode to go back to classic) -->
+    <div id="widget-mode-toggle" class="layout-mode-indicator" onclick="widgetSystem.switchToClassicMode()" title="Switch to Classic Mode" style="display: none; bottom: 10rem;">
+        📋
     </div>
 
     <!-- Widget Layout Container (hidden by default, shown when widget mode enabled) -->
@@ -6765,21 +6770,32 @@
                 const dashboard = document.getElementById('main-dashboard');
                 if (dashboard) dashboard.style.display = 'none';
 
-                // Show widget layout in view mode
+                // Hide classic mode toggle button
+                const classicToggle = document.getElementById('layout-mode-toggle');
+                if (classicToggle) classicToggle.style.display = 'none';
+
+                // Show widget layout in view mode (not edit mode)
                 this.showWidgetLayout();
 
-                // Enter edit mode to configure
-                this.enterEditMode();
+                // Show edit button so user can enter edit mode
+                const editBtn = document.getElementById('edit-layout-btn');
+                if (editBtn) editBtn.style.display = 'flex';
 
-                showToast('Widget mode enabled! Click ✓ Done when finished editing', 'success');
+                // Show widget mode toggle (🧩 button to go back to classic)
+                const widgetToggle = document.getElementById('widget-mode-toggle');
+                if (widgetToggle) widgetToggle.style.display = 'flex';
+
+                showToast('Widget mode enabled! Click ✏️ to edit layout', 'success');
             },
 
             switchToClassicMode() {
                 this.layoutMode = 'classic';
                 localStorage.setItem('layoutMode', 'classic');
 
-                // Exit edit mode first
-                this.exitEditMode();
+                // Exit edit mode first if in edit mode
+                if (this.editMode) {
+                    this.exitEditMode();
+                }
 
                 // Show classic dashboard
                 const dashboard = document.getElementById('main-dashboard');
@@ -6789,9 +6805,16 @@
                 const container = document.getElementById('widget-layout-container');
                 if (container) container.style.display = 'none';
 
-                // Hide layout toggle button in classic mode
+                // Show classic mode toggle button (🧩 to switch to widget mode)
                 const toggle = document.getElementById('layout-mode-toggle');
-                if (toggle) toggle.style.display = 'none';
+                if (toggle) toggle.style.display = 'flex';
+
+                // Hide widget mode buttons
+                const editBtn = document.getElementById('edit-layout-btn');
+                if (editBtn) editBtn.style.display = 'none';
+
+                const widgetToggle = document.getElementById('widget-mode-toggle');
+                if (widgetToggle) widgetToggle.style.display = 'none';
 
                 showToast('Classic mode enabled', 'success');
             },
@@ -6807,10 +6830,6 @@
                     container.style.display = 'grid';
                 }
 
-                // Show layout toggle button
-                const toggle = document.getElementById('layout-mode-toggle');
-                if (toggle) toggle.style.display = 'flex';
-
                 this.renderWidgets();
             },
 
@@ -6822,6 +6841,10 @@
                 // Hide edit layout button
                 const editBtn = document.getElementById('edit-layout-btn');
                 if (editBtn) editBtn.style.display = 'none';
+
+                // Hide widget mode toggle while editing
+                const widgetToggle = document.getElementById('widget-mode-toggle');
+                if (widgetToggle) widgetToggle.style.display = 'none';
 
                 // Add edit mode class to all widgets
                 this.widgets.forEach(widget => {
@@ -6844,6 +6867,10 @@
                 if (this.layoutMode === 'widget') {
                     const editBtn = document.getElementById('edit-layout-btn');
                     if (editBtn) editBtn.style.display = 'flex';
+
+                    // Show widget mode toggle button to switch back to classic
+                    const widgetToggle = document.getElementById('widget-mode-toggle');
+                    if (widgetToggle) widgetToggle.style.display = 'flex';
                 }
 
                 // Remove edit mode class from all widgets
@@ -6856,7 +6883,7 @@
                 });
 
                 this.saveLayout();
-                showToast('Layout saved! Click ✏️ to edit again', 'success');
+                showToast('Layout saved! Click ✏️ to edit again or 📋 for classic mode', 'success');
             },
 
             addWidget(type, x, y, width, height, settings = {}) {
@@ -6947,23 +6974,23 @@
                     },
                     profile: {
                         title: '👤 Profile',
-                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center;"><div id="widget-user-info"></div></div>'
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center;"><div id="' + widget.id + '-content"></div></div>'
                     },
                     title: {
                         title: '📝 Title',
-                        content: '<div class="widget-content" style="text-align: center;"><h1 style="margin: 0;" id="widget-page-title">🚀 Local Services Dashboard</h1><p style="margin: 0.5rem 0 0 0;" id="widget-page-subtitle">Your development environment at a glance</p></div>'
+                        content: '<div class="widget-content" style="text-align: center;"><h1 style="margin: 0;" id="' + widget.id + '-title">🚀 Local Services Dashboard</h1><p style="margin: 0.5rem 0 0 0;" id="' + widget.id + '-subtitle">Your development environment at a glance</p></div>'
                     },
                     categories: {
                         title: '📁 Categories',
-                        content: '<div class="widget-content"><div id="widget-category-tabs"></div></div>'
+                        content: '<div class="widget-content"><div id="' + widget.id + '-tabs" class="category-tabs"></div></div>'
                     },
                     search: {
                         title: '🔍 Search',
-                        content: '<div class="widget-content"><input type="text" class="search-box" placeholder="Search services..." oninput="filterServices()"></div>'
+                        content: '<div class="widget-content"><input type="text" id="' + widget.id + '-search" class="search-box" placeholder="Search services..." oninput="widgetSystem.handleSearchInput(\'' + widget.id + '\')"></div>'
                     },
                     services: {
                         title: '🚀 Services',
-                        content: '<div class="widget-content"><div id="widget-services-grid" class="services-grid"></div></div>'
+                        content: '<div class="widget-content"><div id="' + widget.id + '-grid" class="services-grid"></div></div>'
                     }
                 };
 
@@ -7050,8 +7077,11 @@
 
             // Profile Widget
             startProfileWidget(widgetId) {
-                const container = document.getElementById('widget-user-info');
-                if (!container) return;
+                const container = document.getElementById(widgetId + '-content');
+                if (!container) {
+                    console.error('Profile widget container not found:', widgetId + '-content');
+                    return;
+                }
 
                 // Get current user info
                 if (typeof currentUser !== 'undefined' && currentUser) {
@@ -7072,8 +7102,8 @@
 
             // Title Widget
             startTitleWidget(widgetId) {
-                const titleEl = document.getElementById('widget-page-title');
-                const subtitleEl = document.getElementById('widget-page-subtitle');
+                const titleEl = document.getElementById(widgetId + '-title');
+                const subtitleEl = document.getElementById(widgetId + '-subtitle');
 
                 if (typeof config !== 'undefined' && config.settings) {
                     if (titleEl && config.settings.title) {
@@ -7087,13 +7117,16 @@
 
             // Categories Widget
             startCategoriesWidget(widgetId) {
-                const container = document.getElementById('widget-category-tabs');
-                if (!container) return;
+                const container = document.getElementById(widgetId + '-tabs');
+                if (!container) {
+                    console.error('Categories widget container not found:', widgetId + '-tabs');
+                    return;
+                }
 
                 container.innerHTML = '';
 
                 if (typeof config === 'undefined' || !config.categories || config.categories.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-secondary);">No categories</p>';
+                    container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No categories</p>';
                     return;
                 }
 
@@ -7130,13 +7163,16 @@
 
             // Services Widget
             startServicesWidget(widgetId, categoryName) {
-                const container = document.getElementById('widget-services-grid');
-                if (!container) return;
+                const container = document.getElementById(widgetId + '-grid');
+                if (!container) {
+                    console.error('Services widget container not found:', widgetId + '-grid');
+                    return;
+                }
 
                 container.innerHTML = '';
 
                 if (typeof config === 'undefined' || !config.services || config.services.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-secondary);">No services configured</p>';
+                    container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No services configured</p>';
                     return;
                 }
 
@@ -7152,7 +7188,7 @@
                     : config.services;
 
                 if (categoryServices.length === 0) {
-                    container.innerHTML = `<p style="color: var(--text-secondary);">No services in ${targetCategory}</p>`;
+                    container.innerHTML = `<p style="color: var(--text-secondary); padding: 1rem;">No services in ${targetCategory}</p>`;
                     return;
                 }
 
