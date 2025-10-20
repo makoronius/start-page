@@ -12,6 +12,12 @@ A beautiful, feature-rich dashboard for managing and accessing your local develo
 - **Ambient Sounds**: Realistic soundscapes (Rain, Ocean, Forest Birds, Coffee Shop, Fireplace)
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 - **Customizable Grid**: Choose between 1-4 columns or auto-layout
+- **Widget Mode**: Fully customizable widget-based dashboard with drag-and-drop layout
+  - **Dual Display Modes**: Switch between Classic mode and Widget mode
+  - **48-Column Grid System**: Fine-grained widget positioning and sizing
+  - **Drag & Drop Widgets**: Move and resize widgets freely
+  - **9 Built-in Widgets**: Profile, Title, Clock, Weather, Categories, Search, Services, Settings, Tools
+  - **Persistent Layout**: Your layout is automatically saved
 
 ### 🔐 Security & Access Control
 - **User Authentication**: Secure login with bcrypt password hashing
@@ -348,6 +354,53 @@ Go to **Settings > Customization**:
 - Select particle animation mode
 - Pick your theme
 
+### Widget Mode
+
+The dashboard features a powerful widget system for complete layout customization:
+
+**Switching Modes**:
+- Click the **🧩 Widget Mode** button (bottom-right) to switch from Classic to Widget mode
+- Click the **📋 Classic Mode** button to switch back
+- Your preference is automatically saved
+
+**Available Widgets**:
+- **👤 Profile**: Shows your name, roles, and provides quick profile access
+- **📝 Title**: Customizable dashboard title and subtitle
+- **🕐 Clock**: Live time, date, and timezone display
+- **🌤️ Weather**: Weather information widget
+- **📁 Categories**: Category navigation tabs
+- **🔍 Search**: Service search box
+- **🚀 Services**: Main service grid display
+- **⚙️ Settings**: Quick access to settings modal
+- **🛠️ Tools**: Quick access to tools tab (SD image generator, etc.)
+
+**Editing Layout**:
+1. Switch to Widget mode using the **🧩** button
+2. Click the **✏️ Edit** button to enter edit mode
+3. **Drag widgets** to reposition them
+4. **Resize widgets** using the handles on the corners and edges
+5. **Add widgets** from the palette (click **➕ Add Widget**)
+6. **Remove widgets** using the 🗑️ button on each widget
+7. Click **✓ Done** to save and exit edit mode
+
+**Resetting Layout**:
+- In edit mode, click **🔄 Reset** to restore the default 7-widget layout
+- Or manually via browser console:
+  ```javascript
+  localStorage.removeItem('widgetLayout');
+  location.reload();
+  ```
+
+**Default Layout**:
+The default widget layout includes 7 optimized widgets:
+- Title (top-left spanning most of the width)
+- Clock (top-right, 2 rows tall)
+- Profile (compact, second row left)
+- Search (second row center-left)
+- Categories (second row center-right)
+- Services (main content area, large)
+- Weather (right column, 3 rows)
+
 ## 🛠️ Troubleshooting
 
 ### Cannot Login
@@ -409,7 +462,8 @@ ports:
 The following features are planned for future releases:
 
 ### 🎨 Enhanced UI/UX
-- **Dashboard Widgets**: Customizable dashboard widgets (system stats, quick links, notes)
+- **More Widget Types**: Additional widgets (system stats, quick notes, custom embeds)
+- **Widget Themes**: Per-widget color customization and styling
 - **Unique Color Schemes per Category**: Each category can have its own color theme
 - **Custom Service Card Designs**: More card layouts and design options
 - **Easter Eggs**: Hidden games and surprises (excludable for professional categories)
