@@ -7665,8 +7665,8 @@
             },
 
             saveLayout() {
+                // Only save widgets, NOT mode (mode is saved separately via layoutMode localStorage key)
                 const layout = {
-                    mode: this.layoutMode,
                     widgets: this.widgets
                 };
                 localStorage.setItem('widgetLayout', JSON.stringify(layout));
@@ -7678,9 +7678,7 @@
                     if (saved) {
                         const layout = JSON.parse(saved);
                         this.widgets = layout.widgets || [];
-                        if (layout.mode) {
-                            this.layoutMode = layout.mode;
-                        }
+                        // Don't load mode from widgetLayout - it's loaded separately in init()
                     }
 
                     // Create default layout if no widgets
