@@ -1847,6 +1847,20 @@
             cursor: move;
         }
 
+        .widget-drop-preview {
+            position: absolute;
+            background: rgba(var(--primary-color-rgb, 76, 81, 191), 0.15);
+            border: 2px dashed var(--primary-color);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            transition: all 0.15s ease-out;
+        }
+
+        .widget-layout-container.drag-active {
+            background: rgba(var(--primary-color-rgb, 76, 81, 191), 0.03);
+        }
+
         .widget-header {
             display: flex;
             justify-content: space-between;
@@ -7436,39 +7450,116 @@
 
                 const container = document.getElementById('widget-layout-container');
                 if (container) {
+                    // Create drop preview element
+                    const preview = document.createElement('div');
+                    preview.className = 'widget-drop-preview';
+                    preview.style.display = 'none';
+
                     container.addEventListener('dragover', (e) => {
                         e.preventDefault();
                         e.dataTransfer.dropEffect = this.draggedWidgetId ? 'move' : 'copy';
+
+                        // Show drop preview during drag
+                        if (!preview.parentElement) {
+                            container.appendChild(preview);
+                        }
+
+                        container.classList.add('drag-active');
+
+                        // Calculate and show preview position
+                        const rect = container.getBoundingClientRect();
+                        const style = window.getComputedStyle(container);
+                        const gap = parseFloat(style.gap) || 16;
+                        const padding = parseFloat(style.padding) || 16;
+
+                        const relativeX = e.clientX - rect.left - padding;
+                        const relativeY = e.clientY - rect.top - padding;
+
+                        const totalGridWidth = rect.width - 2 * padding;
+                        const cellWidth = (totalGridWidth - gap * 47) / 48;
+                        const cellHeight = 80;
+
+                        // Use Math.round for better snapping (snap to nearest, not always down)
+                        const x = Math.max(0, Math.min(47, Math.round(relativeX / (cellWidth + gap))));
+                        const y = Math.max(0, Math.round(relativeY / (cellHeight + gap)));
+
+                        // Get widget dimensions for preview
+                        let width = 8, height = 2; // Default size
+                        if (this.draggedWidgetId) {
+                            const widget = this.widgets.find(w => w.id === this.draggedWidgetId);
+                            if (widget) {
+                                width = widget.width;
+                                height = widget.height;
+                            }
+                        } else {
+                            // Default sizes for new widgets from palette
+                            const widgetType = e.dataTransfer.types.includes('widget-type') ?
+                                e.dataTransfer.getData('widget-type') : null;
+                            const defaults = {
+                                title: { w: 36, h: 1 },
+                                clock: { w: 12, h: 2 },
+                                weather: { w: 12, h: 3 },
+                                profile: { w: 8, h: 1 },
+                                search: { w: 12, h: 1 },
+                                categories: { w: 16, h: 1 },
+                                services: { w: 36, h: 5 },
+                                config: { w: 6, h: 2 },
+                                tools: { w: 6, h: 2 }
+                            };
+                            if (widgetType && defaults[widgetType]) {
+                                width = defaults[widgetType].w;
+                                height = defaults[widgetType].h;
+                            }
+                        }
+
+                        // Ensure widget fits in grid
+                        const clampedX = Math.max(0, Math.min(x, 48 - width));
+                        const clampedY = Math.max(0, y);
+
+                        // Position and size the preview
+                        const previewLeft = clampedX * (cellWidth + gap);
+                        const previewTop = clampedY * (cellHeight + gap);
+                        const previewWidth = width * cellWidth + (width - 1) * gap;
+                        const previewHeight = height * cellHeight + (height - 1) * gap;
+
+                        preview.style.display = 'block';
+                        preview.style.left = `${previewLeft + padding}px`;
+                        preview.style.top = `${previewTop + padding}px`;
+                        preview.style.width = `${previewWidth}px`;
+                        preview.style.height = `${previewHeight}px`;
+                    });
+
+                    container.addEventListener('dragleave', (e) => {
+                        // Only hide if leaving container entirely (not just entering a child)
+                        if (e.target === container) {
+                            preview.style.display = 'none';
+                            container.classList.remove('drag-active');
+                        }
                     });
 
                     container.addEventListener('drop', (e) => {
                         e.preventDefault();
+                        preview.style.display = 'none';
+                        container.classList.remove('drag-active');
+
                         const widgetType = e.dataTransfer.getData('widget-type');
 
                         // Calculate grid position from drop coordinates
-                        // Using finer grid (48 columns) for precise positioning
                         const rect = container.getBoundingClientRect();
-
-                        // Get computed style to get actual gap and padding values
                         const style = window.getComputedStyle(container);
-                        const gap = parseFloat(style.gap) || 16; // Default to 16px (1rem)
+                        const gap = parseFloat(style.gap) || 16;
                         const padding = parseFloat(style.padding) || 16;
 
-                        // Calculate position accounting for padding and gaps
                         const relativeX = e.clientX - rect.left - padding;
                         const relativeY = e.clientY - rect.top - padding;
 
-                        // Calculate cell dimensions including gap
                         const totalGridWidth = rect.width - 2 * padding;
-                        const totalGridHeight = rect.height - 2 * padding;
-
-                        // Account for gaps: width of each column = (total - gaps) / columns
                         const cellWidth = (totalGridWidth - gap * 47) / 48;
-                        const cellHeight = 80; // Fixed row height
+                        const cellHeight = 80;
 
-                        // Calculate grid position (add gap to account for spacing between cells)
-                        const x = Math.max(0, Math.min(47, Math.floor(relativeX / (cellWidth + gap))));
-                        const y = Math.max(0, Math.floor(relativeY / (cellHeight + gap)));
+                        // Use Math.round for better snapping to nearest grid position
+                        const x = Math.max(0, Math.min(47, Math.round(relativeX / (cellWidth + gap))));
+                        const y = Math.max(0, Math.round(relativeY / (cellHeight + gap)));
 
                         if (widgetType) {
                             // Adding new widget from palette
