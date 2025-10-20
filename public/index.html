@@ -7098,6 +7098,8 @@
                     this.startCategoriesWidget(widget.id);
                 } else if (widget.type === 'services') {
                     this.startServicesWidget(widget.id);
+                } else if (widget.type === 'profile') {
+                    this.startProfileWidget(widget.id);
                 }
             },
 
@@ -7113,7 +7115,7 @@
                     },
                     profile: {
                         title: '👤 Profile',
-                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="btn" onclick="showProfile(event)" style="padding: 1rem 2rem; font-size: 1rem;">👤 Manage Profile</button></div>'
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem; cursor: pointer; padding: 1.5rem;" onclick="showProfile(event)" title="Click to manage profile"><div style="font-size: 2rem;">👤</div><div id="' + widget.id + '-username" style="font-weight: 600; color: var(--text-primary); text-align: center;">Loading...</div><div id="' + widget.id + '-roles" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">Loading...</div></div>'
                     },
                     title: {
                         title: '📝 Title',
@@ -7359,6 +7361,35 @@
                         container.appendChild(card);
                     }
                 });
+            },
+
+            // Profile Widget
+            startProfileWidget(widgetId) {
+                const usernameEl = document.getElementById(widgetId + '-username');
+                const rolesEl = document.getElementById(widgetId + '-roles');
+
+                if (!usernameEl || !rolesEl) {
+                    console.error('Profile widget elements not found:', widgetId);
+                    return;
+                }
+
+                // Update profile widget with current user data
+                if (typeof currentUser !== 'undefined' && currentUser) {
+                    let displayName = currentUser.username;
+                    if (currentUser.is_local) {
+                        displayName = 'localhost';
+                    } else if (currentUser.first_name && currentUser.last_name) {
+                        displayName = `${currentUser.first_name} ${currentUser.last_name}`;
+                    } else if (currentUser.first_name) {
+                        displayName = currentUser.first_name;
+                    }
+
+                    usernameEl.textContent = displayName;
+                    rolesEl.textContent = currentUser.roles ? currentUser.roles.join(', ') : 'No roles';
+                } else {
+                    usernameEl.textContent = 'Not logged in';
+                    rolesEl.textContent = 'Please log in';
+                }
             },
 
             // Drag and Drop
