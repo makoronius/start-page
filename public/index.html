@@ -2943,6 +2943,10 @@
             <div class="palette-widget-title">🚀 Services</div>
             <div class="palette-widget-desc">Service cards grid</div>
         </div>
+        <div class="palette-widget" draggable="true" data-widget-type="config">
+            <div class="palette-widget-title">⚙️ Settings</div>
+            <div class="palette-widget-desc">Quick access to settings</div>
+        </div>
     </div>
 
     <!-- Layout Mode Toggle Button (Classic Mode - switch to widgets) -->
@@ -7122,6 +7126,10 @@
                     services: {
                         title: '🚀 Services',
                         content: '<div class="widget-content"><div id="' + widget.id + '-grid" class="services-grid"></div></div>'
+                    },
+                    config: {
+                        title: '⚙️ Settings',
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="btn" onclick="showSettings(event)" style="padding: 1rem 2rem; font-size: 1rem;">⚙️ Open Settings</button></div>'
                     }
                 };
 
