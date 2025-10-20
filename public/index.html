@@ -2037,6 +2037,8 @@
             display: none;
             z-index: 10000;
             max-height: 80vh;
+            max-width: 280px;
+            width: 280px;
             overflow-y: auto;
         }
 
@@ -3395,6 +3397,34 @@
                 currentUser.first_name = firstName;
                 const displayName = `Hello, ${firstName}`;
                 document.getElementById('username-text').textContent = displayName;
+            }
+        }
+
+        // Show Tools - switches to classic mode and opens tools tab
+        function showTools(event) {
+            if (event) event.preventDefault();
+
+            // If in widget mode, switch to classic mode first
+            if (typeof widgetSystem !== 'undefined' && widgetSystem.layoutMode === 'widget') {
+                widgetSystem.switchToClassicMode();
+            }
+
+            // Wait a moment for mode switch, then activate tools tab
+            setTimeout(() => {
+                const toolsBtn = document.getElementById('tools-tab-btn');
+                if (toolsBtn) {
+                    toolsBtn.click();
+                }
+            }, 100);
+        }
+
+        // Show Settings - opens settings modal
+        function showSettings(event) {
+            if (event) event.preventDefault();
+
+            const modal = document.getElementById('settings-modal');
+            if (modal) {
+                modal.style.display = 'flex';
             }
         }
 
@@ -7259,7 +7289,7 @@
                 const titleEl = document.getElementById(widgetId + '-title');
                 const subtitleEl = document.getElementById(widgetId + '-subtitle');
 
-                if (typeof config !== 'undefined' && config.settings) {
+                if (typeof config !== 'undefined' && config !== null && config.settings) {
                     if (titleEl && config.settings.title) {
                         titleEl.textContent = config.settings.title;
                     }
@@ -7279,7 +7309,7 @@
 
                 container.innerHTML = '';
 
-                if (typeof config === 'undefined' || !config.categories || config.categories.length === 0) {
+                if (typeof config === 'undefined' || config === null || !config.categories || config.categories.length === 0) {
                     container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No categories</p>';
                     return;
                 }
@@ -7325,7 +7355,7 @@
 
                 container.innerHTML = '';
 
-                if (typeof config === 'undefined' || !config.services || config.services.length === 0) {
+                if (typeof config === 'undefined' || config === null || !config.services || config.services.length === 0) {
                     container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No services configured</p>';
                     return;
                 }
