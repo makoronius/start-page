@@ -7644,6 +7644,8 @@
                     this.createDefaultLayout();
                     this.renderWidgets();
                     this.saveLayout();
+                    // Exit edit mode to show clean layout
+                    this.exitEditMode();
                     showToast('Layout reset to default', 'success');
                 }
             },
