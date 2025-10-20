@@ -1842,6 +1842,28 @@
             transform: translateY(-2px);
         }
 
+        /* Frameless widget mode */
+        .widget.frameless {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .widget.frameless:hover {
+            box-shadow: none;
+            transform: none;
+        }
+
+        .widget.frameless .widget-header {
+            border-bottom: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .widget.frameless:hover .widget-header {
+            opacity: 1;
+        }
+
         .widget.dragging {
             opacity: 0.5;
             cursor: move;
@@ -7160,11 +7182,11 @@
                     },
                     profile: {
                         title: '👤 Profile',
-                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem; cursor: pointer; padding: 1.5rem;" onclick="showProfile(event)" title="Click to manage profile"><div style="font-size: 2rem;">👤</div><div id="' + widget.id + '-username" style="font-weight: 600; color: var(--text-primary); text-align: center;">Loading...</div><div id="' + widget.id + '-roles" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">Loading...</div></div>'
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem; padding: 1.5rem;"><div onclick="showProfile(event)" style="cursor: pointer; text-align: center; width: 100%;" title="Click to manage profile"><div style="font-size: 2rem;">👤</div><div id="' + widget.id + '-username" style="font-weight: 600; color: var(--text-primary); text-align: center;">Loading...</div><div id="' + widget.id + '-roles" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">Loading...</div></div><button class="tab-btn" onclick="handleLogout()" style="padding: 0.5rem 1.5rem; font-size: 0.9rem; width: 100%;">Logout</button></div>'
                     },
                     title: {
                         title: '📝 Title',
-                        content: '<div class="widget-content" style="text-align: center;"><h1 style="margin: 0;" id="' + widget.id + '-title">🚀 Local Services Dashboard</h1><p style="margin: 0.5rem 0 0 0;" id="' + widget.id + '-subtitle">Your development environment at a glance</p></div>'
+                        content: '<div class="widget-content" style="text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;"><h1 style="margin: 0; font-size: 2.5rem; background: linear-gradient(135deg, var(--primary-color), #667eea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" id="' + widget.id + '-title">🚀 Local Services Dashboard</h1><p style="margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 1.1rem;" id="' + widget.id + '-subtitle">Your development environment at a glance</p></div>'
                     },
                     categories: {
                         title: '📁 Categories',
@@ -7180,11 +7202,11 @@
                     },
                     config: {
                         title: '⚙️ Settings',
-                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="btn" onclick="showSettings(event)" style="padding: 1rem 2rem; font-size: 1rem;">⚙️ Open Settings</button></div>'
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="tab-btn" onclick="showSettings(event)">⚙️ Open Settings</button></div>'
                     },
                     tools: {
                         title: '🛠️ Tools',
-                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="btn" onclick="showTools(event)" style="padding: 1rem 2rem; font-size: 1rem;">🛠️ Open Tools</button></div>'
+                        content: '<div class="widget-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;"><button class="tab-btn" onclick="showTools(event)">🛠️ Open Tools</button></div>'
                     }
                 };
 
@@ -7591,6 +7613,19 @@
                 e.target.classList.remove('dragging');
             },
 
+            // Check if two widgets overlap
+            widgetsOverlap(x1, y1, w1, h1, x2, y2, w2, h2) {
+                return !(x1 + w1 <= x2 || x2 + w2 <= x1 || y1 + h1 <= y2 || y2 + h2 <= y1);
+            },
+
+            // Check if widget position would cause collision
+            checkCollision(widgetId, newX, newY, newWidth, newHeight) {
+                return this.widgets.some(w => {
+                    if (w.id === widgetId) return false; // Don't check against self
+                    return this.widgetsOverlap(newX, newY, newWidth, newHeight, w.x, w.y, w.width, w.height);
+                });
+            },
+
             moveWidget(widgetId, newX, newY) {
                 const widget = this.widgets.find(w => w.id === widgetId);
                 if (!widget) return;
@@ -7598,6 +7633,12 @@
                 // Clamp position to grid (48 columns)
                 newX = Math.max(0, Math.min(newX, 48 - widget.width));
                 newY = Math.max(0, newY);
+
+                // Check for collisions
+                if (this.checkCollision(widgetId, newX, newY, widget.width, widget.height)) {
+                    showToast('Cannot move widget - position occupied', 'error');
+                    return;
+                }
 
                 widget.x = newX;
                 widget.y = newY;
@@ -7664,25 +7705,27 @@
                     let newY = startPosY;
 
                     // Calculate new dimensions and position based on direction
-                    // East resize (right edge)
+                    // East resize (right edge) - only width changes
                     if (direction.includes('e')) {
-                        newWidth = Math.round((startWidth * cellWidth + deltaX) / cellWidth);
+                        const deltaCols = Math.round(deltaX / cellWidth);
+                        newWidth = startWidth + deltaCols;
                     }
-                    // West resize (left edge) - also changes x position
+                    // West resize (left edge) - width and x position change
                     if (direction.includes('w')) {
-                        const widthChange = Math.round(deltaX / cellWidth);
-                        newWidth = startWidth - widthChange;
-                        newX = startPosX + widthChange;
+                        const deltaCols = Math.round(deltaX / cellWidth);
+                        newWidth = startWidth - deltaCols;
+                        newX = startPosX + deltaCols;
                     }
-                    // South resize (bottom edge)
+                    // South resize (bottom edge) - only height changes
                     if (direction.includes('s')) {
-                        newHeight = Math.round((startHeight * cellHeight + deltaY) / cellHeight);
+                        const deltaRows = Math.round(deltaY / cellHeight);
+                        newHeight = startHeight + deltaRows;
                     }
-                    // North resize (top edge) - also changes y position
+                    // North resize (top edge) - height and y position change
                     if (direction.includes('n')) {
-                        const heightChange = Math.round(deltaY / cellHeight);
-                        newHeight = startHeight - heightChange;
-                        newY = startPosY + heightChange;
+                        const deltaRows = Math.round(deltaY / cellHeight);
+                        newHeight = startHeight - deltaRows;
+                        newY = startPosY + deltaRows;
                     }
 
                     // Constrain to minimum and maximum (48 columns)
@@ -7690,6 +7733,11 @@
                     newHeight = Math.max(1, newHeight);
                     newX = Math.max(0, Math.min(newX, 48 - newWidth));
                     newY = Math.max(0, newY);
+
+                    // Check for collisions before applying
+                    if (widgetSystem.checkCollision(widget.id, newX, newY, newWidth, newHeight)) {
+                        return; // Don't apply if would cause collision
+                    }
 
                     // Update widget dimensions and position
                     widget.width = newWidth;
