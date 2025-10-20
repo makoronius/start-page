@@ -7328,7 +7328,8 @@
 
                 if (typeof config !== 'undefined' && config !== null && config.settings) {
                     if (titleEl && config.settings.title) {
-                        titleEl.textContent = config.settings.title;
+                        // Preserve emoji and add title from config
+                        titleEl.textContent = '🚀 ' + config.settings.title;
                     }
                     if (subtitleEl && config.settings.subtitle) {
                         subtitleEl.textContent = config.settings.subtitle;
