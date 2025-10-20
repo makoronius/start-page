@@ -6995,7 +6995,8 @@
             enterEditMode() {
                 this.editMode = true;
                 document.getElementById('layout-editor-bar').classList.add('active');
-                document.getElementById('widget-palette').classList.add('active');
+                // Don't auto-show palette - only show when user clicks "Add Widget"
+                // document.getElementById('widget-palette').classList.add('active');
 
                 // Hide edit layout button
                 const editBtn = document.getElementById('edit-layout-btn');
@@ -7651,19 +7652,23 @@
             },
 
             createDefaultLayout() {
-                // Improved default layout for 48-column grid
-                // Top row: Title centered with clock on right
-                this.addWidget('title', 0, 0, 36, 1);      // Title: full left side
+                // Complete default layout with all 9 widgets - 48-column grid
+                // Row 0: Title and Clock
+                this.addWidget('title', 0, 0, 36, 1);      // Title: spans most of width
                 this.addWidget('clock', 36, 0, 12, 2);      // Clock: right side, 2 rows tall
 
-                // Second row: Profile, search, and categories
+                // Row 1: Profile, Search, Categories
                 this.addWidget('profile', 0, 1, 8, 1);      // Profile: compact left
-                this.addWidget('search', 8, 1, 12, 1);      // Search: next to profile
+                this.addWidget('search', 8, 1, 12, 1);      // Search: center-left
                 this.addWidget('categories', 20, 1, 16, 1); // Categories: center-right
 
-                // Main content area: Services and weather
-                this.addWidget('services', 0, 2, 36, 5);    // Services: large main area
+                // Rows 2-6: Services (main) and Weather (right)
+                this.addWidget('services', 0, 2, 36, 5);    // Services: large main area, 5 rows
                 this.addWidget('weather', 36, 2, 12, 3);    // Weather: right column, 3 rows
+
+                // Row 5: Tools and Config (below weather on right)
+                this.addWidget('tools', 36, 5, 6, 2);       // Tools: right side, compact
+                this.addWidget('config', 42, 5, 6, 2);      // Config: right side, compact
             },
 
             saveLayout() {
